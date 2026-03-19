@@ -129,7 +129,11 @@
         }
         @font-face {
             font-family: 'TW-Kai-98';
-            src: url('Fonts_Kai (1)/TW-Kai-98_1.woff2') format('woff2'),
+            /* 兼容兩種上傳位置：
+               1) 字型放在專案根目錄（與 dictation_exam.html 同層）
+               2) 字型放在 Fonts_Kai (1)/ 資料夾內 */
+            src: url('TW-Kai-98_1.woff2') format('woff2'),
+                 url('Fonts_Kai (1)/TW-Kai-98_1.woff2') format('woff2'),
                  url('Fonts_Kai (1)/TW-Kai-98_1.ttf') format('truetype');
             font-display: block;
         }
