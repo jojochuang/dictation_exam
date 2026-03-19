@@ -744,9 +744,9 @@
                 if (Math.abs(dx) < SWIPE_THRESHOLD) return false;
                 justSwiped = true;
                 if (dx > 0) {
-                    strokeOverlayPhraseIdx = (strokeOverlayPhraseIdx + 1) % 10;
-                } else {
                     strokeOverlayPhraseIdx = (strokeOverlayPhraseIdx + 9) % 10;
+                } else {
+                    strokeOverlayPhraseIdx = (strokeOverlayPhraseIdx + 1) % 10;
                 }
                 renderStrokeOverlay();
                 setTimeout(() => { justSwiped = false; }, 100);
