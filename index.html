@@ -455,7 +455,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         const SHEET_ID = '1PWGAxP2QEcfb3Aj3m7S-SWVqrxpI3Y3ywhkXcaxv9Ko';
-        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+        const DEFAULT_SHEET_GID = '1975515821';
+        const sheetGid = (function () {
+            try {
+                const p = new URLSearchParams(window.location.search || '');
+                const g = (p.get('gid') || '').trim();
+                return g || DEFAULT_SHEET_GID;
+            } catch (_) {
+                return DEFAULT_SHEET_GID;
+            }
+        })();
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${encodeURIComponent(sheetGid)}`;
         const CORS_PROXIES = [
             (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
             (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
@@ -565,7 +575,82 @@
             window.speechSynthesis.speak(u);
         }
 
-        function extractSets(rows) {
+        /**
+         * 將「一個儲存格」內整段貼上的文字拆成最多 4 個中文字位置（含緊接的變體選擇符）。
+         * 第 1 字 → 該題第 1 個按鈕…第 4 字 → 第 4 個按鈕；不足則後面為空白。
+         */
+        function parsePhraseCellToFour(cellVal) {
+            const chars = ['', '', '', ''];
+            const raws = ['', '', '', ''];
+            const s = (cellVal != null ? String(cellVal) : '').trim();
+            if (!s) return { chars, raws };
+            let slot = 0;
+            let i = 0;
+            while (i < s.length && slot < 4) {
+                const cp = s.codePointAt(i);
+                const u = String.fromCodePoint(cp);
+                const isHan = /[\u4e00-\u9fff\u3400-\u4dbf]/u.test(u);
+                if (isHan) {
+                    let seg = u;
+                    i += u.length;
+                    while (i < s.length) {
+                        const cp2 = s.codePointAt(i);
+                        const u2 = String.fromCodePoint(cp2);
+                        const isVS = cp2 >= 0xFE00 && cp2 <= 0xFE0F;
+                        const isIVS = cp2 >= 0xE0100 && cp2 <= 0xE01EF;
+                        if (isVS || isIVS) {
+                            seg += u2;
+                            i += u2.length;
+                        } else {
+                            break;
+                        }
+                    }
+                    raws[slot] = seg;
+                    chars[slot] = onlyHan(seg) || seg;
+                    slot++;
+                } else {
+                    i += u.length;
+                }
+            }
+            return { chars, raws };
+        }
+
+        function spreadsheetHeaderIsNewFormat(rows) {
+            if (!rows || !rows.length) return false;
+            const h0 = (rows[0][0] || '').trim();
+            return h0 === '目錄';
+        }
+
+        /**
+         * 新格式：每列一組；A 欄＝週次／標題；B～K 欄＝第 1～10 題（每格最多四字，可從注音字典整段貼上）。
+         */
+        function extractSetsNew(rows) {
+            const sets = [];
+            const start = spreadsheetHeaderIsNewFormat(rows) ? 1 : 0;
+            for (let i = start; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row) continue;
+                const label = (row[0] || '').trim();
+                if (!label || label === '目錄') continue;
+                const chars = [];
+                const raws = [];
+                let any = false;
+                for (let q = 0; q < 10; q++) {
+                    const cell = row[q + 1] !== undefined && row[q + 1] !== null ? String(row[q + 1]).trim() : '';
+                    const seg = parsePhraseCellToFour(cell);
+                    for (let k = 0; k < 4; k++) {
+                        chars.push(seg.chars[k] || '');
+                        raws.push(seg.raws[k] || '');
+                        if (seg.chars[k] || seg.raws[k]) any = true;
+                    }
+                }
+                if (any) sets.push({ label, chars, raws });
+            }
+            return sets;
+        }
+
+        /** 舊格式：每兩列一組，每列 20 格（一字一格），共 40 格 */
+        function extractSetsLegacy(rows) {
             const sets = [];
             const hasData = (r) => {
                 if (!r) return false;
@@ -597,6 +682,16 @@
                 i++;
             }
             return sets;
+        }
+
+        function extractSets(rows) {
+            if (spreadsheetHeaderIsNewFormat(rows)) {
+                const n = extractSetsNew(rows);
+                if (n.length) return n;
+            }
+            const legacy = extractSetsLegacy(rows);
+            if (legacy.length) return legacy;
+            return extractSetsNew(rows);
         }
 
         function renderGrid(chars, raws) {
