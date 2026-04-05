@@ -405,6 +405,128 @@
         .exam-bopomofo-cell.show-only { border: none; }
         .exam-char-cell.char-cell-hidden { display: none !important; }
         body.exam-mode .print-controls { display: none !important; }
+        /* 自製語詞考試對話框（與聽音辨字「自製遊戲內容」相同結構） */
+        .custom-sheet-dialog {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .custom-sheet-dialog.hidden { display: none; }
+        .custom-sheet-dialog-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+        }
+        .custom-sheet-dialog-panel {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            max-height: min(90vh, 640px);
+            overflow-y: auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+            -webkit-overflow-scrolling: touch;
+        }
+        .custom-sheet-dialog-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .custom-sheet-dialog-header h3 {
+            margin: 0;
+            font-size: 1.15em;
+            color: #333;
+        }
+        .custom-sheet-dialog-close {
+            border: none;
+            background: #eee;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.4em;
+            line-height: 1;
+            cursor: pointer;
+            color: #555;
+        }
+        .custom-sheet-dialog-close:hover { background: #ddd; }
+        .custom-sheet-dialog-body {
+            padding: 16px;
+            font-size: 0.9em;
+            color: #444;
+            line-height: 1.55;
+        }
+        .custom-sheet-dialog-body p { margin: 0 0 10px; }
+        .custom-sheet-dialog-body ol {
+            margin: 0 0 14px 1.2rem;
+            padding: 0;
+        }
+        .custom-sheet-dialog-body li { margin-bottom: 8px; }
+        .custom-sheet-dialog-body a {
+            color: #1565c0;
+            word-break: break-all;
+        }
+        .custom-sheet-dialog-body textarea {
+            width: 100%;
+            min-height: 76px;
+            margin: 8px 0 12px;
+            padding: 10px 12px;
+            font-size: 0.95em;
+            border: 2px solid #90caf9;
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .custom-sheet-dialog-hint {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .custom-sheet-dialog-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .custom-sheet-result-box {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px dashed #bdbdbd;
+            display: none;
+        }
+        .custom-sheet-result-box.show { display: block; }
+        .custom-sheet-result-box label {
+            display: block;
+            font-size: 0.88em;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .custom-sheet-result-url {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 0.75em;
+            border: 2px solid #81c784;
+            border-radius: 10px;
+            background: #f1f8e9;
+            color: #1b5e20;
+            box-sizing: border-box;
+            word-break: break-all;
+        }
+        .btn-dictation-secondary {
+            background: linear-gradient(135deg, #78909c, #546e7a) !important;
+        }
+        .btn-dictation-secondary:hover {
+            background: linear-gradient(135deg, #607d8b, #455a64) !important;
+        }
     </style>
 </head>
 <body>
@@ -423,6 +545,7 @@
     <div id="pageContent">
     <h1>聽寫語詞考試</h1>
     <div class="controls">
+        <button type="button" class="btn btn-dictation-secondary" id="btnOpenCustomDictationDialog" title="自製試算表與專屬考試連結">自製語詞考試</button>
         <select id="setSelect">
             <option value="">載入中…</option>
         </select>
@@ -439,6 +562,40 @@
     <div id="message" class="message"></div>
     <div id="gridContainer" class="grid-container"></div>
     </div>
+    <div id="customDictationDialog" class="custom-sheet-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="customDictationDialogTitle">
+        <div class="custom-sheet-dialog-backdrop" id="customDictationDialogBackdrop"></div>
+        <div class="custom-sheet-dialog-panel">
+            <div class="custom-sheet-dialog-header">
+                <h3 id="customDictationDialogTitle">自製語詞考試</h3>
+                <button type="button" class="custom-sheet-dialog-close" id="customDictationDialogClose" aria-label="關閉">×</button>
+            </div>
+            <div class="custom-sheet-dialog-body">
+                <p><strong>聽寫語詞考試試算表範本</strong>（請先開啟後建立副本再編輯）：</p>
+                <p><a href="https://docs.google.com/spreadsheets/d/14YHdAeAybdRmGX7VydaEpI_FMx6wvDPJB4bSq0U9tck/edit?gid=1273402351#gid=1273402351" target="_blank" rel="noopener noreferrer">開啟 Google 試算表範本</a></p>
+                <ol>
+                    <li>在範本中按「檔案 → 建立副本」，複製到自己的雲端硬碟。</li>
+                    <li>依試算表內說明編輯：第一列 A 欄須為「目錄」，B～K 欄為第 1～10 題；每格可貼上整段語詞（最多四個中文字），考試網頁會自動拆成四個格子。</li>
+                    <li>按「共用」，將一般存取權設為<strong>知道連結的任何人可檢視</strong>。</li>
+                    <li>複製瀏覽器網址列的完整網址（請保留 <code>gid=…</code> 以指定工作表分頁），貼在下方，按「生成專屬考試網址」。</li>
+                </ol>
+                <label for="customDictationPasteUrl"><strong>貼上你的試算表網址</strong></label>
+                <textarea id="customDictationPasteUrl" placeholder="https://docs.google.com/spreadsheets/d/…" autocomplete="off" spellcheck="false"></textarea>
+                <p class="custom-sheet-dialog-hint">若網址中沒有 gid，會匯出試算表的第一個工作表。</p>
+                <div class="custom-sheet-dialog-actions">
+                    <button type="button" class="btn" id="customDictationGenBtn">生成專屬考試網址</button>
+                </div>
+                <div id="customDictationGenErr" class="message error" style="display:none;margin-top:10px;text-align:left;"></div>
+                <div id="customDictationResultBox" class="custom-sheet-result-box">
+                    <label for="customDictationResultUrl">專屬考試網址</label>
+                    <input type="text" id="customDictationResultUrl" class="custom-sheet-result-url" readonly />
+                    <div class="custom-sheet-dialog-actions" style="margin-top:10px;">
+                        <button type="button" class="btn btn-dictation-secondary" id="customDictationCopyBtn">Copy 網址</button>
+                        <button type="button" class="btn" id="customDictationOpenBtn">開啟考試</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="strokeOverlay" class="stroke-overlay hidden">
         <div class="stroke-row" id="strokeRow"></div>
     </div>
@@ -454,17 +611,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        const SHEET_ID = '1PWGAxP2QEcfb3Aj3m7S-SWVqrxpI3Y3ywhkXcaxv9Ko';
+        const DEFAULT_SHEET_ID = '1PWGAxP2QEcfb3Aj3m7S-SWVqrxpI3Y3ywhkXcaxv9Ko';
         const DEFAULT_SHEET_GID = '1975515821';
-        const sheetGid = (function () {
-            try {
-                const p = new URLSearchParams(window.location.search || '');
-                const g = (p.get('gid') || '').trim();
-                return g || DEFAULT_SHEET_GID;
-            } catch (_) {
-                return DEFAULT_SHEET_GID;
-            }
-        })();
+        const pageParams = new URLSearchParams(window.location.search || '');
+        const SHEET_ID = (pageParams.get('sheet_id') || '').trim() || DEFAULT_SHEET_ID;
+        const sheetGid = (pageParams.get('gid') || '').trim() || DEFAULT_SHEET_GID;
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${encodeURIComponent(sheetGid)}`;
         const CORS_PROXIES = [
             (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
@@ -1295,6 +1446,137 @@
             secInput.addEventListener('click', e => e.stopPropagation());
         })();
 
+        function extractGidFromUrl(url) {
+            if (!url || typeof url !== 'string') return '';
+            const m = url.match(/[?&#]gid=(\d+)/i);
+            return m ? m[1] : '';
+        }
+        function extractSheetIdFromPaste(text) {
+            const t = (text || '').trim();
+            const m = t.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/i);
+            return m ? m[1] : '';
+        }
+        function buildCustomDictationUrl(sheetIdVal, gidVal) {
+            const q = new URLSearchParams();
+            q.set('sheet_id', sheetIdVal);
+            q.set('gid', gidVal || '0');
+            const u = new URL(window.location.href);
+            u.search = '';
+            u.hash = '';
+            if (u.pathname.endsWith('/')) u.pathname += 'index.html';
+            u.search = q.toString();
+            return u.toString();
+        }
+        function initCustomDictationDialog() {
+            const dialog = document.getElementById('customDictationDialog');
+            const openBtn = document.getElementById('btnOpenCustomDictationDialog');
+            const closeBtn = document.getElementById('customDictationDialogClose');
+            const backdrop = document.getElementById('customDictationDialogBackdrop');
+            const pasteEl = document.getElementById('customDictationPasteUrl');
+            const genBtn = document.getElementById('customDictationGenBtn');
+            const errEl = document.getElementById('customDictationGenErr');
+            const resultBox = document.getElementById('customDictationResultBox');
+            const resultUrlEl = document.getElementById('customDictationResultUrl');
+            const copyBtn = document.getElementById('customDictationCopyBtn');
+            const openExamBtn = document.getElementById('customDictationOpenBtn');
+            if (!dialog || !openBtn) return;
+
+            function showDialog(show) {
+                if (show) {
+                    dialog.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                    if (pasteEl) pasteEl.focus();
+                } else {
+                    dialog.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            }
+            function hideErr() {
+                if (errEl) {
+                    errEl.style.display = 'none';
+                    errEl.textContent = '';
+                }
+            }
+            function showErr(msg) {
+                if (errEl) {
+                    errEl.style.display = 'block';
+                    errEl.textContent = msg;
+                }
+                if (resultBox) resultBox.classList.remove('show');
+            }
+
+            openBtn.addEventListener('click', function () {
+                hideErr();
+                if (resultBox) resultBox.classList.remove('show');
+                showDialog(true);
+            });
+            closeBtn && closeBtn.addEventListener('click', function () { showDialog(false); });
+            backdrop && backdrop.addEventListener('click', function () { showDialog(false); });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && dialog && !dialog.classList.contains('hidden')) {
+                    showDialog(false);
+                }
+            });
+
+            genBtn && genBtn.addEventListener('click', function () {
+                hideErr();
+                const raw = (pasteEl && pasteEl.value ? pasteEl.value : '').trim();
+                if (!raw) {
+                    showErr('請貼上試算表網址。');
+                    return;
+                }
+                const sid = extractSheetIdFromPaste(raw);
+                if (!sid) {
+                    showErr('無法辨識試算表。請貼上 Google 試算表連結（網址中需有 /spreadsheets/d/…）。');
+                    return;
+                }
+                const gidParsed = extractGidFromUrl(raw) || '0';
+                const url = buildCustomDictationUrl(sid, gidParsed);
+                if (resultUrlEl) resultUrlEl.value = url;
+                if (resultBox) resultBox.classList.add('show');
+            });
+
+            function copyText(text, onDone) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(onDone).catch(function () {
+                        execCopyFallback(text, onDone);
+                    });
+                } else {
+                    execCopyFallback(text, onDone);
+                }
+            }
+            function execCopyFallback(text, onDone) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.setAttribute('readonly', '');
+                ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                } catch (e) {}
+                document.body.removeChild(ta);
+                if (onDone) onDone();
+            }
+
+            copyBtn && copyBtn.addEventListener('click', function () {
+                const t = (resultUrlEl && resultUrlEl.value ? resultUrlEl.value : '').trim();
+                if (!t) return;
+                const label = copyBtn.textContent;
+                copyText(t, function () {
+                    copyBtn.textContent = '已複製';
+                    setTimeout(function () { copyBtn.textContent = label; }, 1500);
+                });
+            });
+
+            openExamBtn && openExamBtn.addEventListener('click', function () {
+                const t = (resultUrlEl && resultUrlEl.value ? resultUrlEl.value : '').trim();
+                if (!t) return;
+                window.location.href = t;
+            });
+        }
+
+        initCustomDictationDialog();
         loadSheet();
     </script>
 </body>
