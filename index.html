@@ -955,6 +955,11 @@
         let allSets = [];
         /** 切換週次前記住目前選項，以便存檔離開的那一週 */
         let lastSetSelectIdx = 0;
+        /**
+         * 定稿／顯示隱藏存檔所屬的資料來源（不同試算表、不同分頁、本機 CSV 須分開）。
+         * null ＝目前網址的 Google 試算表（SHEET_ID + sheetGid）。
+         */
+        let draftSourceId = null;
 
         function charToHex(ch) {
             if (!ch || ch.length === 0) return '';
@@ -1061,8 +1066,10 @@
             msg.textContent = '載入中…';
             msg.className = 'message';
             loadBtn.style.display = 'none';
+            draftSourceId = null;
             try {
                 let text = '';
+                let fromEmbeddedExamCsv = false;
                 try {
                     const resp = await fetch(CSV_URL);
                     if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -1076,9 +1083,14 @@
                     }
                     if (!text) {
                         const local = await fetch('exam_data.csv').then(r => r.ok ? r.text() : '').catch(() => '');
-                        if (local) text = local;
-                        else throw corsErr;
+                        if (local) {
+                            text = local;
+                            fromEmbeddedExamCsv = true;
+                        } else throw corsErr;
                     }
+                }
+                if (fromEmbeddedExamCsv) {
+                    draftSourceId = 's_' + SHEET_ID + '_g_' + sheetGid + '_embedded_exam_data';
                 }
                 applyCSV(text);
             } catch (e) {
@@ -1093,6 +1105,8 @@
         document.getElementById('csvFile').addEventListener('change', (e) => {
             const f = e.target.files && e.target.files[0];
             if (!f) return;
+            const safeName = (f.name || 'file.csv').replace(/[^\w.\u4e00-\u9fff-]/g, '_').slice(0, 96);
+            draftSourceId = 'local_' + safeName + '_' + f.size + '_' + f.lastModified;
             const r = new FileReader();
             r.onload = () => {
                 try {
@@ -1176,9 +1190,15 @@
         let currentDraft = null;
         const DRAFT_KEY = 'dictation_exam_drafts';
 
+        function getDraftSourcePrefix() {
+            if (draftSourceId != null) return draftSourceId;
+            return 's_' + SHEET_ID + '_g_' + sheetGid;
+        }
+
         function getDraftKey(setIdx) {
             if (!allSets[setIdx]) return null;
-            return DRAFT_KEY + '_' + allSets[setIdx].label;
+            const label = String(allSets[setIdx].label || '').replace(/\r|\n/g, ' ').trim() || ('set' + setIdx);
+            return DRAFT_KEY + '_' + getDraftSourcePrefix() + '_' + label;
         }
 
         function getVisibilityFromGrid() {
