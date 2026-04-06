@@ -130,7 +130,7 @@
         @font-face {
             font-family: 'TW-Kai-98';
             /* 兼容兩種上傳位置：
-               1) 字型放在專案根目錄（與 dictation_exam.html 同層）
+               1) 字型放在專案根目錄（與 index.html 同層）
                2) 字型放在 Fonts_Kai (1)/ 資料夾內 */
             src: url('TW-Kai-98_1.woff2') format('woff2'),
                  url('Fonts_Kai (1)/TW-Kai-98_1.woff2') format('woff2'),
@@ -543,6 +543,7 @@
         </div>
     </div>
     <div id="pageContent">
+    <p style="text-align:center;margin:0 0 8px;"><a href="https://jojochuang.github.io/" rel="noopener noreferrer" style="color:#1565c0;text-decoration:none;font-size:0.95em;">← 中文備課工具</a></p>
     <h1>聽寫語詞考試</h1>
     <div class="controls">
         <button type="button" class="btn btn-dictation-secondary" id="btnOpenCustomDictationDialog" title="自製試算表與專屬考試連結">自製語詞考試</button>
@@ -1094,7 +1095,7 @@
                 }
                 applyCSV(text);
             } catch (e) {
-                msg.innerHTML = '載入失敗（使用 file:// 開啟會被擋）。<br>請 (1) 將試算表匯出為 CSV 放在同目錄並命名 <code>exam_data.csv</code> 後重整，或 (2) 點擊下方按鈕選擇 CSV 檔案，或 (3) 用 HTTP 開啟：<code>python3 -m http.server 8000</code> 再開 <code>http://localhost:8000/dictation_exam.html</code>';
+                msg.innerHTML = '載入失敗（使用 file:// 開啟會被擋）。<br>請 (1) 將試算表匯出為 CSV 放在同目錄並命名 <code>exam_data.csv</code> 後重整，或 (2) 點擊下方按鈕選擇 CSV 檔案，或 (3) 用 HTTP 開啟：<code>python3 -m http.server 8000</code> 再開 <code>http://localhost:8000/</code> 或 <code>http://localhost:8000/index.html</code>';
                 msg.className = 'message error';
                 sel.innerHTML = '<option value="">載入失敗</option>';
                 loadBtn.style.display = 'inline-block';

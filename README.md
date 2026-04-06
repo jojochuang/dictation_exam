@@ -4,7 +4,14 @@
 
 ## 使用方式
 
-1. 用瀏覽器開啟 `dictation_exam.html`（建議用本地伺服器或 `file://` 開啟以正確載入字型）。
+### GitHub Pages
+
+1. 在 repo 設定中啟用 **GitHub Pages**（Source: main branch）。
+2. 開啟：**https://\<你的帳號\>.github.io/dictation_exam/**（主檔為 `index.html`）。教學入口見 [中文備課工具](https://jojochuang.github.io/)。
+
+### 本機或檔案
+
+1. 用瀏覽器開啟 `index.html`（建議用本地伺服器；純 `file://` 可能無法載入試算表 CSV）。
 2. 從 Google 試算表載入語詞組，或點「載入本機 CSV」上傳 CSV。
 3. 可切換模式：**編輯前次設定**／**考試中**／**對答案**／**全注音**。
 4. 點計時圈開始倒數，每題會依設定秒數計時，並每 30 秒重複唸一次。
@@ -12,10 +19,10 @@
 
 ## 檔案說明
 
-- `dictation_exam.html`：主程式（單一 HTML，含樣式與腳本）
+- `index.html`：主程式（單一 HTML，含樣式與腳本）
 - `BpmfSpecial/`：注音字型（BpmfZihiOnly-R.ttf）
-- `Fonts_Kai (1)/`：楷體字型（TW-Kai-98_1.ttf）
-- `ToneOZ-Tsuipita-TC/`：標音楷體（ToneOZ-Tsuipita-TC.ttf）
+- `TW-Kai-98_1.woff2`：全字庫楷體（選用；亦可放在 `Fonts_Kai (1)/` 並搭配 `index.html` 內 `@font-face` 後備路徑）
+- `ToneOZ-Tsuipita-TC/`：標音楷體（選用，見 `index.html` 內 `@font-face`）
 - `ToneOZ-RadicalZ-KaiTraditional.ttf`：部首標音字型
 
 ## 授權與字型
