@@ -405,6 +405,29 @@
         .exam-bopomofo-cell.show-only { border: none; }
         .exam-char-cell.char-cell-hidden { display: none !important; }
         body.exam-mode .print-controls { display: none !important; }
+        .donation-callout {
+            max-width: 52rem;
+            margin: 0 auto 16px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 2px solid #f59e0b;
+            background: linear-gradient(165deg, #fffbeb, #fef3c7);
+            color: #451a03;
+            font-size: 0.95em;
+            line-height: 1.65;
+            box-sizing: border-box;
+        }
+        .donation-callout a {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: #fff;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .donation-callout a:hover { filter: brightness(1.05); }
         /* 自製語詞考試對話框（與聽音辨字「自製遊戲內容」相同結構） */
         .custom-sheet-dialog {
             position: fixed;
@@ -543,6 +566,12 @@
         </div>
     </div>
     <div id="pageContent">
+    <aside class="donation-callout" aria-label="支持開發者">
+        如果這個聽音辨字遊戲和聽寫考試幫助到你的教學，<br />
+        歡迎請我喝一杯咖啡 ☕<br />
+        你的支持可以讓我持續開發更多免費教材與功能。<br />
+        <a href="https://buymeacoffee.com/reynard999l" target="_blank" rel="noopener noreferrer">Buy Me a Coffee（捐款）</a>
+    </aside>
     <p style="text-align:center;margin:0 0 8px;"><a href="https://jojochuang.github.io/" rel="noopener noreferrer" style="color:#1565c0;text-decoration:none;font-size:0.95em;">← 中文備課工具</a></p>
     <h1>聽寫語詞考試</h1>
     <div class="controls">
