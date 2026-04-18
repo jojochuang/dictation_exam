@@ -20,10 +20,98 @@
             overflow: auto;
             -webkit-overflow-scrolling: touch;
         }
-        h1 {
-            text-align: center;
+        .dictation-title-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
             margin-bottom: 16px;
+        }
+        .dictation-title-wrap h1 {
+            margin: 0;
+            text-align: center;
             color: #333;
+        }
+        .donation-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.2em;
+            height: 2.2em;
+            border-radius: 50%;
+            font-size: 1.35em;
+            line-height: 1;
+            text-decoration: none;
+            background: linear-gradient(165deg, #fffbeb, #fef3c7);
+            border: 2px solid #d97706;
+            box-shadow: 0 2px 8px rgba(180, 83, 9, 0.25);
+            flex-shrink: 0;
+        }
+        .donation-chip:hover {
+            filter: brightness(1.05);
+            transform: scale(1.06);
+        }
+        .donation-chip.hidden {
+            display: none !important;
+        }
+        .donation-banner-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 950;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .donation-banner-overlay.hidden {
+            display: none !important;
+        }
+        .donation-banner-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+        }
+        .donation-banner-panel {
+            position: relative;
+            max-width: min(92vw, 440px);
+            padding: 22px 24px 20px;
+            border-radius: 20px;
+            background: linear-gradient(165deg, #fffbeb, #fef3c7);
+            border: 3px solid #f59e0b;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+            color: #451a03;
+            text-align: center;
+            cursor: pointer;
+            line-height: 1.65;
+        }
+        .donation-banner-panel .donation-banner-lead {
+            margin: 0 0 12px;
+            font-size: 1.05em;
+        }
+        .donation-banner-panel .donation-banner-hint {
+            margin: 0 0 14px;
+            font-size: 0.88em;
+            color: #78350f;
+            opacity: 0.95;
+        }
+        .donation-banner-panel .donation-banner-link {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: #fff !important;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .donation-banner-panel .donation-banner-link:hover {
+            filter: brightness(1.06);
+        }
+        body.exam-mode .donation-banner-overlay {
+            display: none !important;
         }
         .controls {
             display: flex;
@@ -321,6 +409,7 @@
         @media print {
             @page { size: letter landscape; margin: 5mm; }
             body > *:not(.print-zone) { display: none !important; }
+            .donation-banner-overlay { display: none !important; }
             .print-zone {
                 display: block !important;
                 position: fixed !important;
@@ -405,29 +494,6 @@
         .exam-bopomofo-cell.show-only { border: none; }
         .exam-char-cell.char-cell-hidden { display: none !important; }
         body.exam-mode .print-controls { display: none !important; }
-        .donation-callout {
-            max-width: 52rem;
-            margin: 0 auto 16px;
-            padding: 14px 18px;
-            border-radius: 12px;
-            border: 2px solid #f59e0b;
-            background: linear-gradient(165deg, #fffbeb, #fef3c7);
-            color: #451a03;
-            font-size: 0.95em;
-            line-height: 1.65;
-            box-sizing: border-box;
-        }
-        .donation-callout a {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 8px 16px;
-            border-radius: 999px;
-            background: linear-gradient(135deg, #d97706, #b45309);
-            color: #fff;
-            font-weight: 700;
-            text-decoration: none;
-        }
-        .donation-callout a:hover { filter: brightness(1.05); }
         /* 自製語詞考試對話框（與聽音辨字「自製遊戲內容」相同結構） */
         .custom-sheet-dialog {
             position: fixed;
@@ -553,6 +619,18 @@
     </style>
 </head>
 <body>
+    <div id="donationBannerOverlay" class="donation-banner-overlay" role="dialog" aria-modal="true" aria-labelledby="donationBannerTitle" aria-hidden="false">
+        <div class="donation-banner-backdrop" aria-hidden="true"></div>
+        <div class="donation-banner-panel" id="donationBannerPanel">
+            <p id="donationBannerTitle" class="donation-banner-lead">
+                如果這個聽音辨字遊戲和聽寫考試幫助到你的教學，<br />
+                歡迎請我喝一杯咖啡 ☕<br />
+                你的支持可以讓我持續開發更多免費教材與功能。
+            </p>
+            <p class="donation-banner-hint">點一下此處或背景即可收合；收合後標題右側會出現 ☕ 圖示，隨時可再點開支持頁面。</p>
+            <a class="donation-banner-link" href="https://buymeacoffee.com/reynard999l" id="donationBannerLink" target="_blank" rel="noopener noreferrer">Buy Me a Coffee（捐款）</a>
+        </div>
+    </div>
     <div class="timer-wrap" id="timerWrap" title="點擊開始計時">
         <div class="timer-circle">
             <div class="timer-fill" id="timerFill"></div>
@@ -566,14 +644,11 @@
         </div>
     </div>
     <div id="pageContent">
-    <aside class="donation-callout" aria-label="支持開發者">
-        如果這個聽音辨字遊戲和聽寫考試幫助到你的教學，<br />
-        歡迎請我喝一杯咖啡 ☕<br />
-        你的支持可以讓我持續開發更多免費教材與功能。<br />
-        <a href="https://buymeacoffee.com/reynard999l" target="_blank" rel="noopener noreferrer">Buy Me a Coffee（捐款）</a>
-    </aside>
     <p style="text-align:center;margin:0 0 8px;"><a href="https://jojochuang.github.io/" rel="noopener noreferrer" style="color:#1565c0;text-decoration:none;font-size:0.95em;">← 中文備課工具</a></p>
-    <h1>聽寫語詞考試</h1>
+    <div class="dictation-title-wrap">
+        <h1>聽寫語詞考試</h1>
+        <a href="https://buymeacoffee.com/reynard999l" class="donation-chip hidden" id="donationChip" target="_blank" rel="noopener noreferrer" title="支持開發者（Buy Me a Coffee）">☕</a>
+    </div>
     <div class="controls">
         <button type="button" class="btn btn-dictation-secondary" id="btnOpenCustomDictationDialog" title="自製試算表與專屬考試連結">自製語詞考試</button>
         <select id="setSelect">
@@ -1150,6 +1225,53 @@
             r.readAsText(f, 'UTF-8');
             e.target.value = '';
         });
+
+        (function initDonationFloatingBanner() {
+            var LS_KEY = 'dictation_donation_banner_dismissed_v1';
+            var overlay = document.getElementById('donationBannerOverlay');
+            var chip = document.getElementById('donationChip');
+            var link = document.getElementById('donationBannerLink');
+            if (!overlay || !chip) return;
+            function dismissBanner(save) {
+                overlay.classList.add('hidden');
+                overlay.setAttribute('aria-hidden', 'true');
+                chip.classList.remove('hidden');
+                if (save) {
+                    try { localStorage.setItem(LS_KEY, '1'); } catch (e) {}
+                }
+            }
+            function syncBanner() {
+                var dismissed = false;
+                try { dismissed = localStorage.getItem(LS_KEY) === '1'; } catch (e) {}
+                if (dismissed || document.body.classList.contains('exam-mode')) {
+                    dismissBanner(false);
+                    return;
+                }
+                overlay.classList.remove('hidden');
+                overlay.setAttribute('aria-hidden', 'false');
+                chip.classList.add('hidden');
+            }
+            overlay.addEventListener('click', function () {
+                dismissBanner(true);
+            });
+            if (link) {
+                link.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    dismissBanner(true);
+                });
+            }
+            syncBanner();
+            try {
+                var mo = new MutationObserver(function () {
+                    if (overlay.classList.contains('hidden')) return;
+                    if (document.body.classList.contains('exam-mode') ||
+                        document.body.classList.contains('fullscreen-fallback')) {
+                        dismissBanner(true);
+                    }
+                });
+                mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+            } catch (e) {}
+        })();
 
         document.getElementById('modeToggleBtn').addEventListener('click', () => {
             if (document.body.classList.contains('timer-running')) return;
