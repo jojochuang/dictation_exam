@@ -165,7 +165,9 @@
         .message.error { color: #c62828; }
         .grid-container {
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
+            flex-wrap: nowrap;
+            align-items: center;
             justify-content: center;
             gap: 8px;
             max-width: 100%;
@@ -259,8 +261,33 @@
             src: url('ToneOZ-Tsuipita-TC/ToneOZ-Tsuipita-TC.ttf') format('truetype');
             font-display: block;
         }
+        @font-face {
+            font-family: 'ToneOZPinyinKaiTraditional';
+            src: url('ToneOZ-Pinyin-Kai-Traditional.woff2') format('woff2');
+            font-display: block;
+        }
         .cell-pair { display: flex; gap: 0; align-items: stretch; }
+        .cell-pair .pair-main { display: flex; flex-direction: column; gap: 0; align-items: stretch; }
         .cell-pair .cell { border-right: none; border-radius: 4px 0 0 4px; }
+        .cell-pair .cell-pinyin {
+            width: 2cm; height: 0.8cm; min-width: 1.2cm; min-height: 0.6cm;
+            border: 2px solid #333; border-bottom: 1px solid #333; border-radius: 4px 0 0 0;
+            background: #fff; display: none; align-items: flex-start; justify-content: center;
+            overflow: hidden; cursor: pointer;
+        }
+        .cell-pinyin .pinyin-clip {
+            width: 100%; height: 100%; overflow: hidden; position: relative;
+            display: block;
+        }
+        .cell-pinyin .pinyin-text {
+            position: absolute; left: 50%; top: 0;
+            display: inline-block;
+            font-family: 'ToneOZPinyinKaiTraditional', 'TW-Kai-98', 'Microsoft JhengHei', serif;
+            font-size: 3.5em; line-height: 2cm; white-space: nowrap;
+            transform: translateX(-50%) translateY(calc(-0.92em + 15mm));
+            clip-path: inset(-14% 0 46% 0);
+        }
+        .cell-pinyin.tianzige .pinyin-text { visibility: hidden; }
         .cell-pair .cell-bopomofo {
             width: 0.8cm; height: 2cm; min-width: 0.8cm; min-height: 2cm;
             border: 2px solid #333; border-left: 1px solid #333; border-radius: 0 4px 4px 0;
@@ -272,6 +299,13 @@
         .cell-bopomofo:hover { background: #f0f0f0; }
         .cell-bopomofo .bopomofo-text { transform: translateX(-1mm); }
         .cell-bopomofo.tianzige .bopomofo-text { visibility: hidden; }
+        body.pinyin-mode .cell-pair .cell-pinyin { display: flex; }
+        body.pinyin-mode .cell-pair .cell-pinyin { border-radius: 4px 4px 0 0; }
+        body.pinyin-mode .cell-pair .cell {
+            border-right: 2px solid #333;
+            border-radius: 0 0 4px 4px;
+        }
+        body.pinyin-mode .cell-pair .cell-bopomofo { display: none; }
         .grid-row { gap: 8px; }
         .phrase-block { position: relative; display: flex; align-items: center; gap: 8px; }
         .phrase-block .phrase-highlight {
@@ -322,6 +356,12 @@
         body.narrow-screen.narrow-landscape #pageContent { margin-left: 182px; max-width: calc(100vw - 200px); }
         body.narrow-screen.narrow-landscape .cell { width: min(2cm, 11vw); height: min(2cm, 11vw); min-width: min(1.2cm, 9vw); min-height: min(1.2cm, 9vw); font-size: min(3.5em, 10vw); }
         body.narrow-screen.narrow-landscape .cell-bopomofo { width: min(0.8cm, 5vw); min-width: min(0.8cm, 5vw); height: min(2cm, 11vw); min-height: min(1.2cm, 9vw); font-size: min(3em, 8vw); }
+        body.narrow-screen.narrow-landscape .cell-pinyin { width: min(2cm, 11vw); min-width: min(1.2cm, 9vw); height: min(0.8cm, 5vw); min-height: min(0.55cm, 4vw); }
+        body.narrow-screen.narrow-landscape .cell-pinyin .pinyin-text {
+            font-size: min(3.5em, 10vw);
+            transform: translateX(-50%) translateY(calc(-0.95em + 15mm));
+            clip-path: inset(-14% 0 44% 0);
+        }
         .phrase-label {
             display: flex; flex-direction: column; align-items: center; gap: 2px;
         }
@@ -340,13 +380,15 @@
         body.timer-running #modeToggleBtn { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
         body.exam-mode .char-base,
         body.exam-mode .char-radical,
-        body.exam-mode .bopomofo-text { visibility: hidden !important; }
+        body.exam-mode .bopomofo-text,
+        body.exam-mode .pinyin-text { visibility: hidden !important; }
         body.mode-bopomofo .char-base,
         body.mode-bopomofo .char-radical { visibility: hidden !important; }
         /* 對答案：全部顯示，不受定稿/人工隱藏影響 */
         body.mode-answer .char-base,
         body.mode-answer .char-radical,
-        body.mode-answer .bopomofo-text { visibility: visible !important; }
+        body.mode-answer .bopomofo-text,
+        body.mode-answer .pinyin-text { visibility: visible !important; }
         /* 全注音：注音全部顯示，不受定稿/人工隱藏影響 */
         body.mode-bopomofo .bopomofo-text { visibility: visible !important; }
         /* 考試中/對答案/全注音：不顯示十字虛線 */
@@ -357,7 +399,8 @@
         body.mode-bopomofo .cell.tianzige::before,
         body.mode-bopomofo .cell.tianzige::after { display: none !important; }
         .cell-pair.empty .cell,
-        .cell-pair.empty .cell-bopomofo { border-color: #e0e0e0 !important; }
+        .cell-pair.empty .cell-bopomofo,
+        .cell-pair.empty .cell-pinyin { border-color: #e0e0e0 !important; }
         .timer-wrap {
             position: fixed; top: 16px; left: 16px;
             width: 182px; height: 182px;
@@ -460,10 +503,139 @@
             background: #fff; width: 279.4mm; min-height: 215.9mm;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
+        .preview-overlay .preview-paper.pinyin-preview {
+            width: 215.9mm; min-height: 279.4mm;
+        }
         .print-page {
             width: 279.4mm; min-height: 215.9mm; padding: 5mm;
             display: flex; box-sizing: border-box;
         }
+        .print-page.print-page-pinyin {
+            width: 215.9mm; min-height: 279.4mm;
+            display: flex; flex-direction: column; gap: 10mm;
+            padding: 5mm;
+        }
+        .print-band {
+            flex: 1;
+            border: 1px dashed #bdbdbd;
+            border-radius: 4px;
+            padding: 4mm 0;
+            position: relative;
+        }
+        .print-band .column-watermark {
+            top: -1mm;
+            left: -2mm;
+            right: auto;
+            font-size: 10pt;
+        }
+        .print-band-items {
+            display: flex;
+            align-items: flex-start;
+            gap: 8mm;
+            padding-top: 8mm;
+            margin-top: -10mm;
+            margin-left: 0;
+        }
+        .print-band-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+        }
+        .exam-item-pinyin {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8mm;
+            min-width: 18mm;
+            margin-left: -1px;
+        }
+        .print-band-group .exam-item-pinyin:first-child { margin-left: 0; }
+        .item-num-pinyin {
+            font-weight: bold;
+            font-size: 10pt;
+            width: 20mm;
+            text-align: center;
+            margin-left: 0;
+            flex-shrink: 0;
+        }
+        .item-units-pinyin {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            align-items: stretch;
+        }
+        .exam-unit-pinyin {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            margin-top: 0;
+            width: 20mm;
+        }
+        .item-units-pinyin .exam-unit-pinyin:first-child { margin-top: 0; }
+        .exam-pinyin-cell {
+            width: 20mm;
+            height: calc(6.5mm + 1px);
+            margin-top: -1px;
+            border: 1px solid #000;
+            border-bottom: none;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            background: #fff;
+            box-sizing: border-box;
+        }
+        /* 當上方是「只有拼音格（hidden）」且下方中文顯示時，在中文上方補線，且線在文字之上 */
+        .exam-pinyin-cell.hidden + .exam-char-cell.show-only {
+            z-index: 40;
+        }
+        .exam-pinyin-cell.hidden + .exam-char-cell.show-only::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 1px;
+            background: #000;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .exam-pinyin-cell.show-only { border: none; }
+        .exam-pinyin-cell.hidden { border: 1px solid #000; border-bottom: none; }
+        .exam-pinyin-cell.hidden {
+            position: relative;
+            z-index: 30;
+        }
+        /* 只有左邊是拼音框、右邊是顯示拼音時，補左邊拼音框右側線；不改整題重疊，避免下方中文格變粗 */
+        .print-band-group .exam-item-pinyin:has(.exam-pinyin-cell.hidden):has(+ .exam-item-pinyin .exam-pinyin-cell.show-only) .exam-pinyin-cell.hidden::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -1px;
+            width: 1px;
+            height: 100%;
+            background: #000;
+            pointer-events: none;
+            z-index: 999;
+        }
+        .exam-pinyin-text {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%) translateY(0mm);
+            clip-path: inset(-4% 0 48% 0);
+            font-family: 'ToneOZPinyinKaiTraditional', 'TW-Kai-98', 'Microsoft JhengHei', serif;
+            font-size: 9.8mm;
+            line-height: 20mm;
+            white-space: nowrap;
+        }
+        .exam-unit-pinyin .exam-char-cell {
+            margin-left: 0;
+            width: 20mm;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 2;
+        }
+        .exam-unit-pinyin.empty { visibility: hidden; }
         .print-column {
             flex: 1; padding: 0 3mm; display: flex; flex-direction: column; gap: 0;
             position: relative;
@@ -472,10 +644,11 @@
         .column-watermark {
             position: absolute;
             top: 0;
-            right: 5mm;
+            left: 5mm;
+            right: auto;
             font-weight: bold;
             font-size: 11pt;
-            text-align: right;
+            text-align: left;
             pointer-events: none;
             z-index: 1;
         }
@@ -685,6 +858,7 @@
             <button type="button" class="btn" id="downloadPdfBtn" style="background:linear-gradient(135deg,#607d8b,#455a64)" title="下載 PDF 檔">📥 下載PDF</button>
         </span>
         <button type="button" class="btn" id="modeToggleBtn" style="background:linear-gradient(135deg,#9e9e9e,#757575)" title="切換 編輯前次設定 / 考試中 / 對答案 / 全注音">✏️ 編輯前次設定</button>
+        <button type="button" class="btn" id="pinyinToggleBtn" style="background:linear-gradient(135deg,#26a69a,#00897b)" title="切換 注音（右側）/ 拼音（上方）">切換拼音</button>
         <input type="file" id="csvFile" accept=".csv" style="display:none">
         <button type="button" class="btn" id="loadCsvBtn" style="background:linear-gradient(135deg,#81c784,#4caf50);display:none">📂 載入本機 CSV</button>
     </div>
@@ -1040,6 +1214,22 @@
                     const raw = raws[idx] || '';
                     const pair = document.createElement('div');
                     pair.className = 'cell-pair' + (!ch && !raw ? ' empty' : '');
+                    const pairMain = document.createElement('div');
+                    pairMain.className = 'pair-main';
+                    const cellPinyin = document.createElement('div');
+                    cellPinyin.className = 'cell-pinyin';
+                    cellPinyin.dataset.idx = String(idx);
+                    const clipPinyin = document.createElement('div');
+                    clipPinyin.className = 'pinyin-clip';
+                    const spanPinyin = document.createElement('span');
+                    spanPinyin.className = 'pinyin-text';
+                    spanPinyin.innerHTML = escapeHtml(raw);
+                    clipPinyin.appendChild(spanPinyin);
+                    cellPinyin.appendChild(clipPinyin);
+                    cellPinyin.addEventListener('click', () => {
+                        cellPinyin.classList.toggle('tianzige');
+                        persistCurrentSetDraft();
+                    });
                     const cell = document.createElement('div');
                     cell.className = 'cell';
                     cell.dataset.idx = String(idx);
@@ -1069,7 +1259,9 @@
                         cellBop.classList.toggle('tianzige');
                         persistCurrentSetDraft();
                     });
-                    pair.appendChild(cell);
+                    pairMain.appendChild(cellPinyin);
+                    pairMain.appendChild(cell);
+                    pair.appendChild(pairMain);
                     pair.appendChild(cellBop);
                     (col < 4 ? blockLeft : blockRight).appendChild(pair);
                 }
@@ -1297,6 +1489,9 @@
             } catch (e) {}
         })();
 
+        function getBopomofoModeBtnText() {
+            return document.body.classList.contains('pinyin-mode') ? '📝 全拼音' : '📝 全注音';
+        }
         document.getElementById('modeToggleBtn').addEventListener('click', () => {
             if (document.body.classList.contains('timer-running')) return;
             const body = document.body;
@@ -1312,7 +1507,7 @@
                 btn.style.background = 'linear-gradient(135deg,#66bb6a,#43a047)';
                 body.classList.add('mode-answer');
             } else if (btn.textContent === '📝 對答案') {
-                btn.textContent = '📝 全注音';
+                btn.textContent = getBopomofoModeBtnText();
                 btn.style.background = 'linear-gradient(135deg,#42a5f5,#1e88e5)';
                 body.classList.add('mode-bopomofo');
             } else {
@@ -1320,6 +1515,24 @@
                 btn.style.background = 'linear-gradient(135deg,#9e9e9e,#757575)';
             }
         });
+
+        function syncPinyinToggleBtn() {
+            const btn = document.getElementById('pinyinToggleBtn');
+            const on = document.body.classList.contains('pinyin-mode');
+            btn.textContent = on ? '切換注音' : '切換拼音';
+            btn.style.background = on
+                ? 'linear-gradient(135deg,#8e24aa,#6a1b9a)'
+                : 'linear-gradient(135deg,#26a69a,#00897b)';
+            const modeBtn = document.getElementById('modeToggleBtn');
+            if (modeBtn && modeBtn.textContent.indexOf('全') >= 0) {
+                modeBtn.textContent = getBopomofoModeBtnText();
+            }
+        }
+        document.getElementById('pinyinToggleBtn').addEventListener('click', () => {
+            document.body.classList.toggle('pinyin-mode');
+            syncPinyinToggleBtn();
+        });
+        syncPinyinToggleBtn();
 
         document.getElementById('fullscreenBtn').addEventListener('click', () => {
             const doc = document.documentElement;
@@ -1380,13 +1593,19 @@
         function getVisibilityFromGrid() {
             const charVis = new Array(40).fill(true);
             const bopomofoVis = new Array(40).fill(true);
+            const isPinyinMode = document.body.classList.contains('pinyin-mode');
             document.querySelectorAll('.cell-pair').forEach(pair => {
                 const cell = pair.querySelector('.cell');
                 const bop = pair.querySelector('.cell-bopomofo');
+                const pin = pair.querySelector('.cell-pinyin');
                 const idx = parseInt(cell && cell.dataset.idx, 10);
                 if (idx >= 0 && idx < 40) {
                     charVis[idx] = !cell || !cell.classList.contains('tianzige');
-                    bopomofoVis[idx] = !bop || !bop.classList.contains('tianzige');
+                    if (isPinyinMode) {
+                        bopomofoVis[idx] = !pin || !pin.classList.contains('tianzige');
+                    } else {
+                        bopomofoVis[idx] = !bop || !bop.classList.contains('tianzige');
+                    }
                 }
             });
             return { charVisible: charVis, bopomofoVisible: bopomofoVis };
@@ -1394,13 +1613,19 @@
 
         function applyDraftToGrid(draft) {
             if (!draft) return;
+            const isPinyinMode = document.body.classList.contains('pinyin-mode');
             document.querySelectorAll('.cell-pair').forEach(pair => {
                 const cell = pair.querySelector('.cell');
                 const bop = pair.querySelector('.cell-bopomofo');
+                const pin = pair.querySelector('.cell-pinyin');
                 const idx = parseInt(cell && cell.dataset.idx, 10);
                 if (idx >= 0 && idx < 40) {
                     if (cell) cell.classList.toggle('tianzige', !draft.charVisible[idx]);
-                    if (bop) bop.classList.toggle('tianzige', !draft.bopomofoVisible[idx]);
+                    if (isPinyinMode) {
+                        if (pin) pin.classList.toggle('tianzige', !draft.bopomofoVisible[idx]);
+                    } else {
+                        if (bop) bop.classList.toggle('tianzige', !draft.bopomofoVisible[idx]);
+                    }
                 }
             });
         }
@@ -1447,6 +1672,7 @@
         });
 
         function getPreviewMode() {
+            if (document.body.classList.contains('pinyin-mode')) return 'pinyin';
             if (document.body.classList.contains('mode-answer')) return 'answer';
             if (document.body.classList.contains('mode-bopomofo')) return 'bopomofo';
             return 'edit';
@@ -1494,10 +1720,51 @@
             return html;
         }
 
+        function renderPinyinBand(draft, chars, raws) {
+            const cv = draft.charVisible || [];
+            const bv = draft.bopomofoVisible || [];
+            let html = '<div class="print-band-items"><div class="print-band-group">';
+            for (let p = 0; p < 10; p++) {
+                if (p === 5) html += '</div><div class="print-band-group">';
+                const start = p * 4;
+                const phraseChars = chars.slice(start, start + 4);
+                const phraseRaw = (raws || chars).slice(start, start + 4);
+                html += '<div class="exam-item-pinyin">';
+                html += '<span class="item-num-pinyin">' + (p + 1) + '</span>';
+                html += '<div class="item-units-pinyin">';
+                for (let c = 0; c < 4; c++) {
+                    const idx = start + c;
+                    const ch = phraseChars[c] || '';
+                    const raw = phraseRaw[c] || '';
+                    const showCh = cv[idx] !== false;
+                    const showBop = bv[idx] !== false;
+                    if (!ch && !raw) {
+                        continue;
+                    }
+                    const charCls = showCh ? ' show-only' : ' tianzige';
+                    const charContent = showCh ? escapeHtml(ch) : '';
+                    const bopCls = showBop ? ' show-only' : ' hidden';
+                    const bopContent = showBop ? escapeHtml(raw) : '';
+                    html += '<div class="exam-unit-pinyin">';
+                    html += '<div class="exam-pinyin-cell' + bopCls + '"><span class="exam-pinyin-text">' + bopContent + '</span></div>';
+                    html += '<div class="exam-char-cell' + charCls + '">' + charContent + '</div>';
+                    html += '</div>';
+                }
+                html += '</div></div>';
+            }
+            html += '</div></div>';
+            return html;
+        }
+
         function renderPrintSheet(draft, chars, raws, mode, label) {
             if (!draft || !chars) return '';
-            const col = renderOneColumn(draft, chars, raws, mode);
             const wm = label ? '<div class="column-watermark">' + escapeHtml(label) + '</div>' : '';
+            if (mode === 'pinyin') {
+                const band = renderPinyinBand(draft, chars, raws);
+                return '<div class="print-page print-page-pinyin"><div class="print-band print-band-top">' + wm + band +
+                    '</div><div class="print-band print-band-bottom">' + wm + band + '</div></div>';
+            }
+            const col = renderOneColumn(draft, chars, raws, mode);
             return '<div class="print-page"><div class="print-column print-column-left">' + wm + col +
                 '</div><div class="print-column print-column-right">' + wm + col + '</div></div>';
         }
@@ -1511,7 +1778,9 @@
             const mode = getPreviewMode();
             const label = set.label || '';
             const html = renderPrintSheet(draft, set.chars, set.raws, mode, label);
-            document.getElementById('previewPaper').innerHTML = html;
+            const previewPaper = document.getElementById('previewPaper');
+            previewPaper.classList.toggle('pinyin-preview', mode === 'pinyin');
+            previewPaper.innerHTML = html;
             document.getElementById('printZone').innerHTML = html;
             document.getElementById('previewOverlay').classList.remove('hidden');
         }
@@ -1543,6 +1812,7 @@
             const mode = getPreviewMode();
             if (mode === 'answer') return label + '答案';
             if (mode === 'bopomofo') return label + '考中文';
+            if (mode === 'pinyin') return label + '考中文拼音';
             return label + '考中文注音';
         }
 
@@ -1558,10 +1828,13 @@
             try {
                 const canvas = await html2canvas(target, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
                 const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: 'letter' });
-                const imgW = 279.4;
+                const mode = getPreviewMode();
+                const isPinyin = mode === 'pinyin';
+                const pdf = new jsPDF({ orientation: isPinyin ? 'p' : 'l', unit: 'mm', format: 'letter' });
+                const imgW = isPinyin ? 215.9 : 279.4;
+                const maxH = isPinyin ? 279.4 : 215.9;
                 const imgH = (canvas.height * imgW) / canvas.width;
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgW, Math.min(imgH, 215.9));
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgW, Math.min(imgH, maxH));
                 pdf.save(getPdfFilename(idx) + '.pdf');
                 document.getElementById('message').textContent = '已下載 PDF';
             } catch (e) {
