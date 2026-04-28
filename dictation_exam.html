@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var devParam = params.get('dev');
+        var devStorageKey = 'ga_exclude_device_v1';
+
+        if (devParam === '1') localStorage.setItem(devStorageKey, '1');
+        if (devParam === '0') localStorage.removeItem(devStorageKey);
+
+        var isExcludedDevice = localStorage.getItem(devStorageKey) === '1';
+        if (isExcludedDevice) return;
+
+        var g = document.createElement('script');
+        g.async = true;
+        g.src = 'https://www.googletagmanager.com/gtag/js?id=G-RYRFB7LS7N';
+        document.head.appendChild(g);
+
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function gtag() { dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+        window.gtag('config', 'G-RYRFB7LS7N');
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聽寫語詞考試</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='24' font-size='24'>字</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+            background: #f5f5f5;
+            padding: calc(16px + 1cm) 16px 16px 16px;
+            min-height: 100vh;
+        }
+        body.fullscreen-fallback {
+            padding: 8px;
+            position: fixed;
+            inset: 0;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .dictation-title-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .dictation-title-wrap h1 {
+            margin: 0;
+            text-align: center;
+            color: #333;
+        }
+        .donation-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.2em;
+            height: 2.2em;
+            border-radius: 50%;
+            font-size: 1.35em;
+            line-height: 1;
+            text-decoration: none;
+            background: linear-gradient(165deg, #fffbeb, #fef3c7);
+            border: 2px solid #d97706;
+            box-shadow: 0 2px 8px rgba(180, 83, 9, 0.25);
+            flex-shrink: 0;
+        }
+        .donation-chip:hover {
+            filter: brightness(1.05);
+            transform: scale(1.06);
+        }
+        .donation-chip.hidden {
+            display: none !important;
+        }
+        .donation-banner-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 950;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .donation-banner-overlay.hidden {
+            display: none !important;
+        }
+        .donation-banner-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+        }
+        .donation-banner-panel {
+            position: relative;
+            max-width: min(92vw, 440px);
+            padding: 22px 24px 20px;
+            border-radius: 20px;
+            background: linear-gradient(165deg, #fffbeb, #fef3c7);
+            border: 3px solid #f59e0b;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+            color: #451a03;
+            text-align: center;
+            cursor: pointer;
+            line-height: 1.65;
+        }
+        .donation-banner-panel .donation-banner-lead {
+            margin: 0 0 12px;
+            font-size: 1.05em;
+        }
+        .donation-banner-panel .donation-banner-hint {
+            margin: 0 0 14px;
+            font-size: 0.88em;
+            color: #78350f;
+            opacity: 0.95;
+        }
+        .donation-banner-panel .donation-banner-link {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: #fff !important;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .donation-banner-panel .donation-banner-link:hover {
+            filter: brightness(1.06);
+        }
+        body.exam-mode .donation-banner-overlay {
+            display: none !important;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .controls select {
+            padding: 8px 12px;
+            font-size: 1em;
+            border-radius: 8px;
+            border: 2px solid #a5d6a7;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 999px;
+            border: none;
+            font-size: 1em;
+            cursor: pointer;
+            background: linear-gradient(135deg, #42a5f5, #1e88e5);
+            color: white;
+        }
+        .btn:hover { background: linear-gradient(135deg, #1e88e5, #1565c0); }
+        .message { text-align: center; margin-bottom: 12px; color: #666; }
+        .message.error { color: #c62828; }
+        .grid-container {
+            display: flex;
+            flex-direction: column;
+            flex-wrap: nowrap;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .grid-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .cell {
+            width: 2cm;
+            height: 2cm;
+            min-width: 2cm;
+            min-height: 2cm;
+            border: 2px solid #333;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5em;
+            font-weight: bold;
+            cursor: pointer;
+            background: #fff;
+            position: relative;
+            transition: background 0.15s;
+        }
+        .cell:hover { background: #f0f0f0; }
+        .cell.tianzige {
+            background: #fff;
+        }
+        .cell.tianzige::before,
+        .cell.tianzige::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+        }
+        .cell.tianzige::before {
+            width: 0;
+            height: 100%;
+            border-left: 1px dashed rgba(0,0,0,0.35);
+        }
+        .cell.tianzige::after {
+            height: 0;
+            width: 100%;
+            border-top: 1px dashed rgba(0,0,0,0.35);
+        }
+        .cell.tianzige .char-base,
+        .cell.tianzige .char-radical { visibility: hidden; }
+        .cell .char-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+        .cell .char-base {
+            font-family: 'TW-Kai-98', 'Microsoft JhengHei', '楷體', serif;
+            font-size: inherit;
+            color: #000;
+        }
+        .cell .char-radical {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(calc(-50% + 3.7mm), calc(-50% - 2.4mm));
+            font-family: 'ToneOZRadicalZKaiTraditional', serif;
+            font-size: inherit;
+            color: #c62828;
+            pointer-events: none;
+        }
+        @font-face {
+            font-family: 'BpmfZihiOnly';
+            src: url('BpmfSpecial/BpmfZihiOnly-R.ttf') format('truetype');
+            font-display: block;
+        }
+        @font-face {
+            font-family: 'TW-Kai-98';
+            /* 兼容兩種上傳位置：
+               1) 字型放在專案根目錄（與 index.html 同層）
+               2) 字型放在 Fonts_Kai (1)/ 資料夾內 */
+            src: url('TW-Kai-98_1.woff2') format('woff2'),
+                 url('Fonts_Kai (1)/TW-Kai-98_1.woff2') format('woff2'),
+                 url('Fonts_Kai (1)/TW-Kai-98_1.ttf') format('truetype');
+            font-display: block;
+        }
+        @font-face {
+            font-family: 'ToneOZRadicalZKaiTraditional';
+            src: url('ToneOZ-RadicalZ-KaiTraditional.ttf') format('truetype');
+            font-display: block;
+        }
+        @font-face {
+            font-family: 'ToneOZTsuipitaTC';
+            src: url('ToneOZ-Tsuipita-TC/ToneOZ-Tsuipita-TC.ttf') format('truetype');
+            font-display: block;
+        }
+        @font-face {
+            font-family: 'ToneOZPinyinKaiTraditional';
+            src: url('ToneOZ-Pinyin-Kai-Traditional.woff2') format('woff2');
+            font-display: block;
+        }
+        .cell-pair { display: flex; gap: 0; align-items: stretch; }
+        .cell-pair .pair-main { display: flex; flex-direction: column; gap: 0; align-items: stretch; }
+        .cell-pair .cell { border-right: none; border-radius: 4px 0 0 4px; }
+        .cell-pair .cell-pinyin {
+            width: 2cm; height: 0.8cm; min-width: 1.2cm; min-height: 0.6cm;
+            border: 2px solid #333; border-bottom: 1px solid #333; border-radius: 4px 0 0 0;
+            background: #fff; display: none; align-items: flex-start; justify-content: center;
+            overflow: hidden; cursor: pointer;
+        }
+        .cell-pinyin .pinyin-clip {
+            width: 100%; height: 100%; overflow: hidden; position: relative;
+            display: block;
+        }
+        .cell-pinyin .pinyin-text {
+            position: absolute; left: 50%; top: 0;
+            display: inline-block;
+            font-family: 'ToneOZPinyinKaiTraditional', 'TW-Kai-98', 'Microsoft JhengHei', serif;
+            font-size: 3.5em; line-height: 2cm; white-space: nowrap;
+            transform: translateX(-50%) translateY(calc(-0.92em + 15mm));
+            clip-path: inset(-14% 0 46% 0);
+        }
+        .cell-pinyin.tianzige .pinyin-text { visibility: hidden; }
+        .cell-pair .cell-bopomofo {
+            width: 0.8cm; height: 2cm; min-width: 0.8cm; min-height: 2cm;
+            border: 2px solid #333; border-left: 1px solid #333; border-radius: 0 4px 4px 0;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'BpmfZihiOnly', 'BpmfZhuyin', 'Microsoft JhengHei', sans-serif;
+            font-size: 3em; font-weight: bold; cursor: pointer;
+            background: #fff; transition: background 0.15s;
+        }
+        .cell-bopomofo:hover { background: #f0f0f0; }
+        .cell-bopomofo .bopomofo-text { transform: translateX(-1mm); }
+        .cell-bopomofo.tianzige .bopomofo-text { visibility: hidden; }
+        body.pinyin-mode .cell-pair .cell-pinyin { display: flex; }
+        body.pinyin-mode .cell-pair .cell-pinyin { border-radius: 4px 4px 0 0; }
+        body.pinyin-mode .cell-pair .cell {
+            border-right: 2px solid #333;
+            border-radius: 0 0 4px 4px;
+        }
+        body.pinyin-mode .cell-pair .cell-bopomofo { display: none; }
+        .grid-row { gap: 8px; }
+        .phrase-block { position: relative; display: flex; align-items: center; gap: 8px; }
+        .phrase-block .phrase-highlight {
+            position: absolute; inset: -2px; border-radius: 6px;
+            background: rgba(66, 165, 245, 0.32); pointer-events: none;
+            display: none; z-index: 1;
+        }
+        .phrase-block.highlight .phrase-highlight { display: block; }
+        .phrase-block + .phrase-block { margin-left: 48px; }
+        @media (max-width: 768px) {
+            #fullscreenBtn { display: none; }
+            .grid-container { flex-direction: column; align-items: center; }
+            .grid-row { display: contents; }
+            .phrase-block { margin-left: 0 !important; margin-top: 16px; }
+            .phrase-block[data-phrase="1"] { order: 0; margin-top: 0; }
+            .phrase-block[data-phrase="2"] { order: 1; }
+            .phrase-block[data-phrase="3"] { order: 2; }
+            .phrase-block[data-phrase="4"] { order: 3; }
+            .phrase-block[data-phrase="5"] { order: 4; }
+            .phrase-block[data-phrase="6"] { order: 5; }
+            .phrase-block[data-phrase="7"] { order: 6; }
+            .phrase-block[data-phrase="8"] { order: 7; }
+            .phrase-block[data-phrase="9"] { order: 8; }
+            .phrase-block[data-phrase="10"] { order: 9; }
+            .controls { flex-direction: column; align-items: flex-end; flex-wrap: nowrap; }
+            .controls select, .controls .btn { margin-left: 0; }
+        }
+        @media (max-width: 768px) and (orientation: landscape) {
+            .controls { flex-direction: row; flex-wrap: nowrap; justify-content: flex-end; }
+        }
+        body.narrow-screen #fullscreenBtn { display: none !important; }
+        body.narrow-screen .grid-container { flex-direction: column; align-items: center; }
+        body.narrow-screen .grid-row { display: contents; }
+        body.narrow-screen .phrase-block { margin-left: 0 !important; margin-top: 16px; }
+        body.narrow-screen .phrase-block[data-phrase="1"] { order: 0; margin-top: 0; }
+        body.narrow-screen .phrase-block[data-phrase="2"] { order: 1; }
+        body.narrow-screen .phrase-block[data-phrase="3"] { order: 2; }
+        body.narrow-screen .phrase-block[data-phrase="4"] { order: 3; }
+        body.narrow-screen .phrase-block[data-phrase="5"] { order: 4; }
+        body.narrow-screen .phrase-block[data-phrase="6"] { order: 5; }
+        body.narrow-screen .phrase-block[data-phrase="7"] { order: 6; }
+        body.narrow-screen .phrase-block[data-phrase="8"] { order: 7; }
+        body.narrow-screen .phrase-block[data-phrase="9"] { order: 8; }
+        body.narrow-screen .phrase-block[data-phrase="10"] { order: 9; }
+        body.narrow-screen .controls { flex-direction: column; align-items: flex-end; flex-wrap: nowrap; }
+        body.narrow-screen .controls select, body.narrow-screen .controls .btn { margin-left: 0; }
+        body.narrow-screen.narrow-landscape .controls { flex-direction: row; justify-content: flex-end; }
+        body.narrow-screen.narrow-landscape #pageContent { margin-left: 182px; max-width: calc(100vw - 200px); }
+        body.narrow-screen.narrow-landscape .cell { width: min(2cm, 11vw); height: min(2cm, 11vw); min-width: min(1.2cm, 9vw); min-height: min(1.2cm, 9vw); font-size: min(3.5em, 10vw); }
+        body.narrow-screen.narrow-landscape .cell-bopomofo { width: min(0.8cm, 5vw); min-width: min(0.8cm, 5vw); height: min(2cm, 11vw); min-height: min(1.2cm, 9vw); font-size: min(3em, 8vw); }
+        body.narrow-screen.narrow-landscape .cell-pinyin { width: min(2cm, 11vw); min-width: min(1.2cm, 9vw); height: min(0.8cm, 5vw); min-height: min(0.55cm, 4vw); }
+        body.narrow-screen.narrow-landscape .cell-pinyin .pinyin-text {
+            font-size: min(3.5em, 10vw);
+            transform: translateX(-50%) translateY(calc(-0.95em + 15mm));
+            clip-path: inset(-14% 0 44% 0);
+        }
+        .phrase-label {
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+        }
+        .phrase-num {
+            font-size: 1.2em; font-weight: bold; min-width: 1.8em; text-align: center;
+            font-family: inherit;
+        }
+        .phrase-speaker {
+            width: 22px; height: 22px; padding: 0;
+            border: 1px solid #999; border-radius: 50%;
+            background: #fff; cursor: pointer; font-size: 11px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .phrase-speaker:hover { background: #e3f2fd; }
+        body.timer-running #modeToggleBtn { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+        body.exam-mode .char-base,
+        body.exam-mode .char-radical,
+        body.exam-mode .bopomofo-text,
+        body.exam-mode .pinyin-text { visibility: hidden !important; }
+        body.mode-bopomofo .char-base,
+        body.mode-bopomofo .char-radical { visibility: hidden !important; }
+        /* 對答案：全部顯示，不受定稿/人工隱藏影響 */
+        body.mode-answer .char-base,
+        body.mode-answer .char-radical,
+        body.mode-answer .bopomofo-text,
+        body.mode-answer .pinyin-text { visibility: visible !important; }
+        /* 全注音：注音全部顯示，不受定稿/人工隱藏影響 */
+        body.mode-bopomofo .bopomofo-text { visibility: visible !important; }
+        /* 考試中/對答案/全注音：不顯示十字虛線 */
+        body.exam-mode .cell.tianzige::before,
+        body.exam-mode .cell.tianzige::after,
+        body.mode-answer .cell.tianzige::before,
+        body.mode-answer .cell.tianzige::after,
+        body.mode-bopomofo .cell.tianzige::before,
+        body.mode-bopomofo .cell.tianzige::after { display: none !important; }
+        .cell-pair.empty .cell,
+        .cell-pair.empty .cell-bopomofo,
+        .cell-pair.empty .cell-pinyin { border-color: #e0e0e0 !important; }
+        .timer-wrap {
+            position: fixed; top: 16px; left: 16px;
+            width: 182px; height: 182px;
+            z-index: 100;
+        }
+        .timer-circle {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 8px solid #e0e0e0;
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .timer-fill {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: conic-gradient(from -90deg, #42a5f5 0deg, #e0e0e0 0deg);
+        }
+        .timer-inner {
+            position: absolute;
+            inset: 13px;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 27px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+        }
+        .timer-inner .timer-label { font-size: 13px; opacity: 0.8; }
+        .timer-wrap.running .timer-inner { cursor: default; }
+        .timer-sec-label { font-size: 11px; opacity: 0.85; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; }
+        .timer-sec-input { width: 42px; padding: 2px 4px; font-size: 12px; text-align: center; border: 1px solid #999; border-radius: 4px; }
+        body.timer-running .timer-sec-input { opacity: 0.5; pointer-events: none; }
+        body:not(.exam-mode) .phrase-num { cursor: pointer; }
+        body:not(.exam-mode) .phrase-num:hover { color: #1565c0; text-decoration: underline; }
+        .stroke-overlay {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,0.7); display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .stroke-overlay.hidden { display: none; }
+        .stroke-overlay .stroke-row {
+            display: flex; flex-wrap: wrap; gap: 20px;
+            justify-content: center; align-items: center;
+            margin-bottom: 16px;
+            max-width: 100%;
+        }
+        .stroke-overlay .stroke-cell {
+            width: min(22vw, 200px);
+            height: min(22vw, 200px);
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .stroke-overlay .stroke-cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .print-zone { display: none; }
+        @media print {
+            @page { size: letter landscape; margin: 5mm; }
+            body > *:not(.print-zone) { display: none !important; }
+            .donation-banner-overlay { display: none !important; }
+            .print-zone {
+                display: block !important;
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+        }
+        .preview-overlay {
+            position: fixed; inset: 0; z-index: 1001;
+            background: #333; display: flex; flex-direction: column;
+            align-items: center; padding: 20px; overflow: auto;
+        }
+        .preview-overlay.hidden { display: none; }
+        .preview-overlay .preview-toolbar {
+            display: flex; gap: 12px; margin-bottom: 16px;
+        }
+        .preview-overlay .preview-toolbar button {
+            padding: 10px 20px; border-radius: 8px; border: none;
+            background: #42a5f5; color: #fff; cursor: pointer;
+        }
+        .preview-overlay .preview-paper {
+            background: #fff; width: 279.4mm; min-height: 215.9mm;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .preview-overlay .preview-paper.pinyin-preview {
+            width: 215.9mm; min-height: 279.4mm;
+        }
+        .print-page {
+            width: 279.4mm; min-height: 215.9mm; padding: 5mm;
+            display: flex; box-sizing: border-box;
+        }
+        .print-page.print-page-pinyin {
+            width: 215.9mm; min-height: 279.4mm;
+            display: flex; flex-direction: column; gap: 10mm;
+            padding: 5mm;
+        }
+        .print-band {
+            flex: 1;
+            border: 1px dashed #bdbdbd;
+            border-radius: 4px;
+            padding: 4mm 0;
+            position: relative;
+        }
+        .print-band .column-watermark {
+            top: -1mm;
+            left: -2mm;
+            right: auto;
+            font-size: 10pt;
+        }
+        .print-band-items {
+            display: flex;
+            align-items: flex-start;
+            gap: 8mm;
+            padding-top: 8mm;
+            margin-top: -10mm;
+            margin-left: 0;
+        }
+        .print-band-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+        }
+        .exam-item-pinyin {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8mm;
+            min-width: 18mm;
+            margin-left: -1px;
+        }
+        .print-band-group .exam-item-pinyin:first-child { margin-left: 0; }
+        .item-num-pinyin {
+            font-weight: bold;
+            font-size: 10pt;
+            width: 20mm;
+            text-align: center;
+            margin-left: 0;
+            flex-shrink: 0;
+        }
+        .item-units-pinyin {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            align-items: stretch;
+        }
+        .exam-unit-pinyin {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            margin-top: 0;
+            width: 20mm;
+        }
+        .item-units-pinyin .exam-unit-pinyin:first-child { margin-top: 0; }
+        .exam-pinyin-cell {
+            width: 20mm;
+            height: calc(6.5mm + 1px);
+            margin-top: -1px;
+            border: 1px solid #000;
+            border-bottom: none;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            background: #fff;
+            box-sizing: border-box;
+        }
+        /* 當上方是「只有拼音格（hidden）」且下方中文顯示時，在中文上方補線，且線在文字之上 */
+        .exam-pinyin-cell.hidden + .exam-char-cell.show-only {
+            z-index: 40;
+        }
+        .exam-pinyin-cell.hidden + .exam-char-cell.show-only::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 1px;
+            background: #000;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .exam-pinyin-cell.show-only { border: none; }
+        .exam-pinyin-cell.hidden { border: 1px solid #000; border-bottom: none; }
+        .exam-pinyin-cell.hidden {
+            position: relative;
+            z-index: 30;
+        }
+        /* 只有左邊是拼音框、右邊是顯示拼音時，補左邊拼音框右側線；不改整題重疊，避免下方中文格變粗 */
+        .print-band-group .exam-item-pinyin:has(.exam-pinyin-cell.hidden):has(+ .exam-item-pinyin .exam-pinyin-cell.show-only) .exam-pinyin-cell.hidden::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -1px;
+            width: 1px;
+            height: 100%;
+            background: #000;
+            pointer-events: none;
+            z-index: 999;
+        }
+        .exam-pinyin-text {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%) translateY(0mm);
+            clip-path: inset(-4% 0 48% 0);
+            font-family: 'ToneOZPinyinKaiTraditional', 'TW-Kai-98', 'Microsoft JhengHei', serif;
+            font-size: 9.8mm;
+            line-height: 20mm;
+            white-space: nowrap;
+        }
+        .exam-unit-pinyin .exam-char-cell {
+            margin-left: 0;
+            width: 20mm;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 2;
+        }
+        .exam-unit-pinyin.empty { visibility: hidden; }
+        .print-column {
+            flex: 1; padding: 0 3mm; display: flex; flex-direction: column; gap: 0;
+            position: relative;
+        }
+        .print-column + .print-column { border-left: 1px dashed #999; }
+        .column-watermark {
+            position: absolute;
+            top: 0;
+            left: 5mm;
+            right: auto;
+            font-weight: bold;
+            font-size: 11pt;
+            text-align: left;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .print-column-left { margin-left: -4mm; }
+        .exam-item {
+            display: flex; align-items: flex-start; gap: 1mm;
+            break-inside: avoid; min-height: 20mm; margin-bottom: -1px;
+        }
+        .exam-item-lower { margin-top: 8mm; }
+        .exam-item .item-num {
+            font-weight: bold; font-size: 11pt; width: 8mm; min-width: 8mm; flex-shrink: 0;
+            margin-top: 8mm; text-align: right;
+        }
+        .exam-item .item-units { display: flex; flex-wrap: wrap; gap: 0; align-items: stretch; }
+        .exam-char-cell, .exam-bopomofo-cell {
+            margin-left: -1px; box-sizing: border-box;
+        }
+        .exam-item .item-units > *:first-child { margin-left: 0; }
+        .exam-char-cell {
+            width: 20mm; height: 20mm; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9.8mm; font-family: 'ToneOZTsuipitaTC', 'TW-Kai-98', 'Microsoft JhengHei', serif;
+            border: 1px solid #000; position: relative;
+        }
+        .exam-char-cell.show-only { border: none; }
+        .exam-char-cell.tianzige::before, .exam-char-cell.tianzige::after {
+            content: ''; position: absolute; left: 0; top: 0; right: 0; bottom: 0; margin: auto;
+            pointer-events: none;
+        }
+        .exam-char-cell.tianzige::before { width: 0; height: 100%; border-left: 1px dashed rgba(0,0,0,0.5); }
+        .exam-char-cell.tianzige::after { height: 0; width: 100%; border-top: 1px dashed rgba(0,0,0,0.5); }
+        .exam-bopomofo-cell {
+            width: 8mm; height: 20mm; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12mm; font-family: 'BpmfZihiOnly', sans-serif;
+            writing-mode: vertical-rl;
+            padding-right: 1mm; box-sizing: border-box;
+        }
+        .exam-bopomofo-cell.hidden { border: 1px solid #000; }
+        .exam-bopomofo-cell.show-only { border: none; }
+        .exam-char-cell.char-cell-hidden { display: none !important; }
+        body.exam-mode .print-controls { display: none !important; }
+        /* 自製語詞考試對話框（與聽音辨字「自製遊戲內容」相同結構） */
+        .custom-sheet-dialog {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .custom-sheet-dialog.hidden { display: none; }
+        .custom-sheet-dialog-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+        }
+        .custom-sheet-dialog-panel {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            max-height: min(90vh, 640px);
+            overflow-y: auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+            -webkit-overflow-scrolling: touch;
+        }
+        .custom-sheet-dialog-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .custom-sheet-dialog-header h3 {
+            margin: 0;
+            font-size: 1.15em;
+            color: #333;
+        }
+        .custom-sheet-dialog-close {
+            border: none;
+            background: #eee;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.4em;
+            line-height: 1;
+            cursor: pointer;
+            color: #555;
+        }
+        .custom-sheet-dialog-close:hover { background: #ddd; }
+        .custom-sheet-dialog-body {
+            padding: 16px;
+            font-size: 0.9em;
+            color: #444;
+            line-height: 1.55;
+        }
+        .custom-sheet-dialog-body p { margin: 0 0 10px; }
+        .custom-sheet-dialog-body ol {
+            margin: 0 0 14px 1.2rem;
+            padding: 0;
+        }
+        .custom-sheet-dialog-body li { margin-bottom: 8px; }
+        .custom-sheet-dialog-body a {
+            color: #1565c0;
+            word-break: break-all;
+        }
+        .custom-sheet-dialog-body textarea {
+            width: 100%;
+            min-height: 76px;
+            margin: 8px 0 12px;
+            padding: 10px 12px;
+            font-size: 0.95em;
+            border: 2px solid #90caf9;
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .custom-sheet-dialog-hint {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .custom-sheet-dialog-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .custom-sheet-result-box {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px dashed #bdbdbd;
+            display: none;
+        }
+        .custom-sheet-result-box.show { display: block; }
+        .custom-sheet-result-box label {
+            display: block;
+            font-size: 0.88em;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .custom-sheet-result-url {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 0.75em;
+            border: 2px solid #81c784;
+            border-radius: 10px;
+            background: #f1f8e9;
+            color: #1b5e20;
+            box-sizing: border-box;
+            word-break: break-all;
+        }
+        .btn-dictation-secondary {
+            background: linear-gradient(135deg, #78909c, #546e7a) !important;
+        }
+        .btn-dictation-secondary:hover {
+            background: linear-gradient(135deg, #607d8b, #455a64) !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="donationBannerOverlay" class="donation-banner-overlay" role="dialog" aria-modal="true" aria-labelledby="donationBannerTitle" aria-hidden="false">
+        <div class="donation-banner-backdrop" aria-hidden="true"></div>
+        <div class="donation-banner-panel" id="donationBannerPanel">
+            <p id="donationBannerTitle" class="donation-banner-lead">
+                如果這個聽音辨字遊戲和聽寫考試幫助到你的教學，<br />
+                歡迎請我喝一杯咖啡 ☕<br />
+                你的支持可以讓我持續開發更多免費教材與功能。
+            </p>
+            <p class="donation-banner-hint">點一下此處或背景即可收合；收合後標題右側會出現 ☕ 圖示，隨時可再點開支持頁面。</p>
+            <a class="donation-banner-link" href="https://buymeacoffee.com/reynard999l" id="donationBannerLink" target="_blank" rel="noopener noreferrer">Buy Me a Coffee（捐款）</a>
+        </div>
+    </div>
+    <div class="timer-wrap" id="timerWrap" title="點擊開始計時">
+        <div class="timer-circle">
+            <div class="timer-fill" id="timerFill"></div>
+            <div class="timer-inner" id="timerInner">
+                <span class="timer-label" id="timerLabel">點擊開始</span>
+                <span id="timerTime">2:00</span>
+                <label class="timer-sec-label">秒/題
+                    <input type="number" id="timerSecInput" min="5" max="120" value="120" step="5" class="timer-sec-input">
+                </label>
+            </div>
+        </div>
+    </div>
+    <div id="pageContent">
+    <p style="text-align:center;margin:0 0 8px;"><a href="https://jojochuang.github.io/" rel="noopener noreferrer" style="color:#1565c0;text-decoration:none;font-size:0.95em;">← 中文備課工具</a></p>
+    <div class="dictation-title-wrap">
+        <h1>聽寫語詞考試</h1>
+        <a href="https://buymeacoffee.com/reynard999l" class="donation-chip hidden" id="donationChip" target="_blank" rel="noopener noreferrer" title="支持開發者（Buy Me a Coffee）">☕</a>
+    </div>
+    <div class="controls">
+        <button type="button" class="btn btn-dictation-secondary" id="btnOpenCustomDictationDialog" title="自製試算表與專屬考試連結">自製語詞考試</button>
+        <select id="setSelect">
+            <option value="">載入中…</option>
+        </select>
+        <button type="button" class="btn" id="fullscreenBtn" title="全螢幕">⛶ 全螢幕</button>
+        <span class="print-controls" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn" id="draftBtn" style="background:linear-gradient(135deg,#ff9800,#f57c00)" title="將目前顯示/隱藏設定定稿並儲存">📋 定稿</button>
+            <button type="button" class="btn" id="previewBtn" style="background:linear-gradient(135deg,#8e24aa,#6a1b9a)" title="預覽考試單">👁 預覽</button>
+            <button type="button" class="btn" id="downloadPdfBtn" style="background:linear-gradient(135deg,#607d8b,#455a64)" title="下載 PDF 檔">📥 下載PDF</button>
+        </span>
+        <button type="button" class="btn" id="modeToggleBtn" style="background:linear-gradient(135deg,#9e9e9e,#757575)" title="切換 編輯前次設定 / 考試中 / 對答案 / 全注音">✏️ 編輯前次設定</button>
+        <button type="button" class="btn" id="pinyinToggleBtn" style="background:linear-gradient(135deg,#26a69a,#00897b)" title="切換 注音（右側）/ 拼音（上方）">切換拼音</button>
+        <input type="file" id="csvFile" accept=".csv" style="display:none">
+        <button type="button" class="btn" id="loadCsvBtn" style="background:linear-gradient(135deg,#81c784,#4caf50);display:none">📂 載入本機 CSV</button>
+    </div>
+    <div id="message" class="message"></div>
+    <div id="gridContainer" class="grid-container"></div>
+    </div>
+    <div id="customDictationDialog" class="custom-sheet-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="customDictationDialogTitle">
+        <div class="custom-sheet-dialog-backdrop" id="customDictationDialogBackdrop"></div>
+        <div class="custom-sheet-dialog-panel">
+            <div class="custom-sheet-dialog-header">
+                <h3 id="customDictationDialogTitle">自製語詞考試</h3>
+                <button type="button" class="custom-sheet-dialog-close" id="customDictationDialogClose" aria-label="關閉">×</button>
+            </div>
+            <div class="custom-sheet-dialog-body">
+                <p><strong>聽寫語詞考試試算表範本</strong>（請先開啟後建立副本再編輯）：</p>
+                <p><a href="https://docs.google.com/spreadsheets/d/14YHdAeAybdRmGX7VydaEpI_FMx6wvDPJB4bSq0U9tck/edit?gid=1273402351#gid=1273402351" target="_blank" rel="noopener noreferrer">開啟 Google 試算表範本</a></p>
+                <ol>
+                    <li>在範本中按「檔案 → 建立副本」，複製到自己的雲端硬碟。</li>
+                    <li>依試算表內說明編輯：第一列 A 欄須為「目錄」，B～K 欄為第 1～10 題；每格可貼上整段語詞（最多四個中文字），考試網頁會自動拆成四個格子。</li>
+                    <li>按「共用」，將一般存取權設為<strong>知道連結的任何人可檢視</strong>。</li>
+                    <li>複製瀏覽器網址列的完整網址（請保留 <code>gid=…</code> 以指定工作表分頁），貼在下方，按「生成專屬考試網址」。</li>
+                </ol>
+                <label for="customDictationPasteUrl"><strong>貼上你的試算表網址</strong></label>
+                <textarea id="customDictationPasteUrl" placeholder="https://docs.google.com/spreadsheets/d/…" autocomplete="off" spellcheck="false"></textarea>
+                <p class="custom-sheet-dialog-hint">若網址中沒有 gid，會匯出試算表的第一個工作表。</p>
+                <div class="custom-sheet-dialog-actions">
+                    <button type="button" class="btn" id="customDictationGenBtn">生成專屬考試網址</button>
+                </div>
+                <div id="customDictationGenErr" class="message error" style="display:none;margin-top:10px;text-align:left;"></div>
+                <div id="customDictationResultBox" class="custom-sheet-result-box">
+                    <label for="customDictationResultUrl">專屬考試網址</label>
+                    <input type="text" id="customDictationResultUrl" class="custom-sheet-result-url" readonly />
+                    <div class="custom-sheet-dialog-actions" style="margin-top:10px;">
+                        <button type="button" class="btn btn-dictation-secondary" id="customDictationCopyBtn">Copy 網址</button>
+                        <button type="button" class="btn" id="customDictationOpenBtn">開啟考試</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="strokeOverlay" class="stroke-overlay hidden">
+        <div class="stroke-row" id="strokeRow"></div>
+    </div>
+    <div id="previewOverlay" class="preview-overlay hidden">
+        <div class="preview-toolbar">
+            <button type="button" id="previewCloseBtn">關閉預覽</button>
+            <button type="button" id="previewPrintBtn">📥 下載PDF</button>
+        </div>
+        <div id="previewPaper" class="preview-paper"></div>
+    </div>
+    <div id="printZone" class="print-zone"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        const DEFAULT_SHEET_ID = '1PWGAxP2QEcfb3Aj3m7S-SWVqrxpI3Y3ywhkXcaxv9Ko';
+        const DEFAULT_SHEET_GID = '1975515821';
+        const pageParams = new URLSearchParams(window.location.search || '');
+        const SHEET_ID = (pageParams.get('sheet_id') || '').trim() || DEFAULT_SHEET_ID;
+        const sheetGid = (pageParams.get('gid') || '').trim() || DEFAULT_SHEET_GID;
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${encodeURIComponent(sheetGid)}`;
+        const CORS_PROXIES = [
+            (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+            (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
+        ];
+
+        function parseCSV(text) {
+            text = (text || '').replace(/^\uFEFF/, '');
+            const rows = [];
+            const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                const cells = [];
+                let cur = '';
+                let inQ = false;
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (ch === '"') {
+                        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+                        else { inQ = !inQ; }
+                    } else if (ch === ',' && !inQ) {
+                        cells.push(cur);
+                        cur = '';
+                    } else {
+                        cur += ch;
+                    }
+                }
+                cells.push(cur);
+                rows.push(cells);
+            }
+            return rows;
+        }
+
+        function pickVoice() {
+            if (!('speechSynthesis' in window)) return null;
+            const voices = window.speechSynthesis.getVoices();
+            if (!voices || !voices.length) return null;
+            const zh = voices.filter(v => (v.lang || '').toLowerCase().startsWith('zh-tw'));
+            if (zh.length) {
+                const m = zh.find(v => v.name.includes('美佳') || v.name.toLowerCase().includes('meijia'));
+                return m || zh[0];
+            }
+            return voices.find(v => (v.lang || '').toLowerCase().startsWith('zh')) || voices[0];
+        }
+
+        function onlyHan(text) {
+            return (text || '').replace(/[^\u4e00-\u9fff\u3400-\u4dbf]/g, '');
+        }
+        function escapeHtml(s) {
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+        function speak(text) {
+            if (!('speechSynthesis' in window)) return;
+            const t = (text || '').replace(/[^\u4e00-\u9fff\u3400-\u4dbf\s]/g, '').trim();
+            if (!t) return;
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(t);
+            u.lang = 'zh-TW';
+            u.rate = 0.8;
+            const v = pickVoice();
+            if (v) u.voice = v;
+            window.speechSynthesis.speak(u);
+        }
+        function playCheerSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                let t = ctx.currentTime;
+                notes.forEach((freq, i) => {
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    o.connect(g);
+                    g.connect(ctx.destination);
+                    o.frequency.value = freq;
+                    o.type = 'sine';
+                    g.gain.setValueAtTime(0.3, t);
+                    g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+                    o.start(t);
+                    o.stop(t + 0.15);
+                    t += 0.12;
+                });
+            } catch (_) {}
+        }
+        function speakPhraseWithIntro(idx, chars) {
+            const text = chars.slice(idx * 4, idx * 4 + 4).join('');
+            if (!text) return;
+            if (!('speechSynthesis' in window)) return;
+            const intro = '第' + (idx + 1) + '題';
+            const t2 = (text || '').replace(/[^\u4e00-\u9fff\u3400-\u4dbf\s]/g, '').trim();
+            if (!t2) return;
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(intro);
+            u.lang = 'zh-TW';
+            u.rate = 0.8;
+            const v = pickVoice();
+            if (v) u.voice = v;
+            u.onend = () => {
+                setTimeout(() => {
+                    const u2 = new SpeechSynthesisUtterance(t2);
+                    u2.lang = 'zh-TW';
+                    u2.rate = 0.8;
+                    if (v) u2.voice = v;
+                    window.speechSynthesis.speak(u2);
+                }, 1000);
+            };
+            window.speechSynthesis.speak(u);
+        }
+
+        /**
+         * 將「一個儲存格」內整段貼上的文字拆成最多 4 個中文字位置（含緊接的變體選擇符）。
+         * 第 1 字 → 該題第 1 個按鈕…第 4 字 → 第 4 個按鈕；不足則後面為空白。
+         */
+        function parsePhraseCellToFour(cellVal) {
+            const chars = ['', '', '', ''];
+            const raws = ['', '', '', ''];
+            const s = (cellVal != null ? String(cellVal) : '').trim();
+            if (!s) return { chars, raws };
+            let slot = 0;
+            let i = 0;
+            while (i < s.length && slot < 4) {
+                const cp = s.codePointAt(i);
+                const u = String.fromCodePoint(cp);
+                const isHan = /[\u4e00-\u9fff\u3400-\u4dbf]/u.test(u);
+                if (isHan) {
+                    let seg = u;
+                    i += u.length;
+                    while (i < s.length) {
+                        const cp2 = s.codePointAt(i);
+                        const u2 = String.fromCodePoint(cp2);
+                        const isVS = cp2 >= 0xFE00 && cp2 <= 0xFE0F;
+                        const isIVS = cp2 >= 0xE0100 && cp2 <= 0xE01EF;
+                        if (isVS || isIVS) {
+                            seg += u2;
+                            i += u2.length;
+                        } else {
+                            break;
+                        }
+                    }
+                    raws[slot] = seg;
+                    chars[slot] = onlyHan(seg) || seg;
+                    slot++;
+                } else {
+                    i += u.length;
+                }
+            }
+            return { chars, raws };
+        }
+
+        function spreadsheetHeaderIsNewFormat(rows) {
+            if (!rows || !rows.length) return false;
+            const h0 = (rows[0][0] || '').trim();
+            return h0 === '目錄';
+        }
+
+        /**
+         * 新格式：每列一組；A 欄＝週次／標題；B～K 欄＝第 1～10 題（每格最多四字，可從注音字典整段貼上）。
+         */
+        function extractSetsNew(rows) {
+            const sets = [];
+            const start = spreadsheetHeaderIsNewFormat(rows) ? 1 : 0;
+            for (let i = start; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row) continue;
+                const label = (row[0] || '').trim();
+                if (!label || label === '目錄') continue;
+                const chars = [];
+                const raws = [];
+                let any = false;
+                for (let q = 0; q < 10; q++) {
+                    const cell = row[q + 1] !== undefined && row[q + 1] !== null ? String(row[q + 1]).trim() : '';
+                    const seg = parsePhraseCellToFour(cell);
+                    for (let k = 0; k < 4; k++) {
+                        chars.push(seg.chars[k] || '');
+                        raws.push(seg.raws[k] || '');
+                        if (seg.chars[k] || seg.raws[k]) any = true;
+                    }
+                }
+                if (any) sets.push({ label, chars, raws });
+            }
+            return sets;
+        }
+
+        /** 舊格式：每兩列一組，每列 20 格（一字一格），共 40 格 */
+        function extractSetsLegacy(rows) {
+            const sets = [];
+            const hasData = (r) => {
+                if (!r) return false;
+                for (let c = 1; c <= 20; c++) {
+                    const v = (r[c] || '').trim();
+                    if (v && v !== 'A') return true;
+                }
+                return false;
+            };
+            for (let i = 1; i < rows.length - 1; i++) {
+                const r1 = rows[i];
+                const r2 = rows[i + 1];
+                if (!hasData(r1) || !hasData(r2)) continue;
+                const chars = [];
+                const raws = [];
+                for (let c = 1; c <= 20; c++) {
+                    const v = (r1[c] || '').trim();
+                    if (v === 'A' || v === '') { chars.push(''); raws.push(''); }
+                    else { chars.push(onlyHan(v) || v); raws.push(v); }
+                }
+                for (let c = 1; c <= 20; c++) {
+                    const v = (r2[c] || '').trim();
+                    if (v === 'A' || v === '') { chars.push(''); raws.push(''); }
+                    else { chars.push(onlyHan(v) || v); raws.push(v); }
+                }
+                const a1 = (r1[0] || '').trim();
+                const label = /週/.test(a1) ? a1 : ((r2[0] || '').trim() || ('第 ' + (sets.length + 1) + ' 組'));
+                sets.push({ label, chars, raws });
+                i++;
+            }
+            return sets;
+        }
+
+        function extractSets(rows) {
+            if (spreadsheetHeaderIsNewFormat(rows)) {
+                const n = extractSetsNew(rows);
+                if (n.length) return n;
+            }
+            const legacy = extractSetsLegacy(rows);
+            if (legacy.length) return legacy;
+            return extractSetsNew(rows);
+        }
+
+        function renderGrid(chars, raws) {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+            raws = raws || chars.map(() => '');
+            for (let row = 0; row < 5; row++) {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'grid-row';
+                const phraseIdxLeft = row;
+                const phraseIdxRight = row + 5;
+                const blockLeft = document.createElement('div');
+                blockLeft.className = 'phrase-block';
+                blockLeft.dataset.phrase = String(row + 1);
+                const hlLeft = document.createElement('div');
+                hlLeft.className = 'phrase-highlight';
+                const labelLeft = document.createElement('div');
+                labelLeft.className = 'phrase-label';
+                const numLeft = document.createElement('span');
+                numLeft.className = 'phrase-num';
+                numLeft.textContent = String(row + 1);
+                numLeft.addEventListener('click', () => {
+                    if (document.body.classList.contains('exam-mode')) return;
+                    showStrokeOverlay(phraseIdxLeft);
+                });
+                const btnLeft = document.createElement('button');
+                btnLeft.className = 'phrase-speaker';
+                btnLeft.type = 'button';
+                btnLeft.title = '朗讀此組語詞';
+                btnLeft.textContent = '🔊';
+                btnLeft.addEventListener('click', () => {
+                    speakPhraseWithIntro(phraseIdxLeft, chars);
+                });
+                labelLeft.appendChild(numLeft);
+                labelLeft.appendChild(btnLeft);
+                blockLeft.appendChild(labelLeft);
+                const blockRight = document.createElement('div');
+                blockRight.className = 'phrase-block';
+                blockRight.dataset.phrase = String(row + 6);
+                const hlRight = document.createElement('div');
+                hlRight.className = 'phrase-highlight';
+                blockRight.appendChild(hlRight);
+                const labelRight = document.createElement('div');
+                labelRight.className = 'phrase-label';
+                const numRight = document.createElement('span');
+                numRight.className = 'phrase-num';
+                numRight.textContent = String(row + 6);
+                numRight.addEventListener('click', () => {
+                    if (document.body.classList.contains('exam-mode')) return;
+                    showStrokeOverlay(phraseIdxRight);
+                });
+                const btnRight = document.createElement('button');
+                btnRight.className = 'phrase-speaker';
+                btnRight.type = 'button';
+                btnRight.title = '朗讀此組語詞';
+                btnRight.textContent = '🔊';
+                btnRight.addEventListener('click', () => {
+                    speakPhraseWithIntro(phraseIdxRight, chars);
+                });
+                labelRight.appendChild(numRight);
+                labelRight.appendChild(btnRight);
+                blockRight.appendChild(labelRight);
+                for (let col = 0; col < 8; col++) {
+                    const idx = col < 4 ? (row * 4 + col) : (20 + row * 4 + (col - 4));
+                    const ch = chars[idx] || '';
+                    const raw = raws[idx] || '';
+                    const pair = document.createElement('div');
+                    pair.className = 'cell-pair' + (!ch && !raw ? ' empty' : '');
+                    const pairMain = document.createElement('div');
+                    pairMain.className = 'pair-main';
+                    const cellPinyin = document.createElement('div');
+                    cellPinyin.className = 'cell-pinyin';
+                    cellPinyin.dataset.idx = String(idx);
+                    const clipPinyin = document.createElement('div');
+                    clipPinyin.className = 'pinyin-clip';
+                    const spanPinyin = document.createElement('span');
+                    spanPinyin.className = 'pinyin-text';
+                    spanPinyin.innerHTML = escapeHtml(raw);
+                    clipPinyin.appendChild(spanPinyin);
+                    cellPinyin.appendChild(clipPinyin);
+                    cellPinyin.addEventListener('click', () => {
+                        cellPinyin.classList.toggle('tianzige');
+                        persistCurrentSetDraft();
+                    });
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.idx = String(idx);
+                    const wrap = document.createElement('div');
+                    wrap.className = 'char-wrap';
+                    const spanBase = document.createElement('span');
+                    spanBase.className = 'char-base';
+                    spanBase.textContent = ch;
+                    const spanRadical = document.createElement('span');
+                    spanRadical.className = 'char-radical';
+                    spanRadical.textContent = ch;
+                    wrap.appendChild(spanBase);
+                    wrap.appendChild(spanRadical);
+                    cell.appendChild(wrap);
+                    cell.addEventListener('click', () => {
+                        cell.classList.toggle('tianzige');
+                        persistCurrentSetDraft();
+                    });
+                    const cellBop = document.createElement('div');
+                    cellBop.className = 'cell-bopomofo';
+                    cellBop.dataset.idx = String(idx);
+                    const spanBop = document.createElement('span');
+                    spanBop.className = 'bopomofo-text';
+                    spanBop.innerHTML = escapeHtml(raw);
+                    cellBop.appendChild(spanBop);
+                    cellBop.addEventListener('click', () => {
+                        cellBop.classList.toggle('tianzige');
+                        persistCurrentSetDraft();
+                    });
+                    pairMain.appendChild(cellPinyin);
+                    pairMain.appendChild(cell);
+                    pair.appendChild(pairMain);
+                    pair.appendChild(cellBop);
+                    (col < 4 ? blockLeft : blockRight).appendChild(pair);
+                }
+                blockLeft.appendChild(hlLeft);
+                blockRight.appendChild(hlRight);
+                rowEl.appendChild(blockLeft);
+                rowEl.appendChild(blockRight);
+                container.appendChild(rowEl);
+            }
+        }
+
+        let allSets = [];
+        /** 切換週次前記住目前選項，以便存檔離開的那一週 */
+        let lastSetSelectIdx = 0;
+        /**
+         * 定稿／顯示隱藏存檔所屬的資料來源（不同試算表、不同分頁、本機 CSV 須分開）。
+         * null ＝目前網址的 Google 試算表（SHEET_ID + sheetGid）。
+         */
+        let draftSourceId = null;
+
+        function charToHex(ch) {
+            if (!ch || ch.length === 0) return '';
+            return ch.codePointAt(0).toString(16);
+        }
+        let strokeOverlayPhraseIdx = 0;
+        function getStrokeOverlayChars() {
+            const selIdx = parseInt(document.getElementById('setSelect').value, 10);
+            if (isNaN(selIdx) || !allSets[selIdx]) return [];
+            return allSets[selIdx].chars.slice(strokeOverlayPhraseIdx * 4, strokeOverlayPhraseIdx * 4 + 4);
+        }
+        function renderStrokeOverlay() {
+            const chars = getStrokeOverlayChars();
+            const row = document.getElementById('strokeRow');
+            row.innerHTML = '';
+            const phrase = chars.filter(c => c && /[\u4e00-\u9fff\u3400-\u4dbf]/.test(c));
+            for (const ch of phrase) {
+                const hex = charToHex(ch);
+                if (!hex) continue;
+                const cell = document.createElement('div');
+                cell.className = 'stroke-cell';
+                const img = document.createElement('img');
+                img.src = 'https://www.twpen.com/bishun-animation/' + hex + '-stroke-order.gif';
+                img.alt = ch;
+                img.onerror = () => { img.style.display = 'none'; cell.textContent = ch; };
+                cell.appendChild(img);
+                row.appendChild(cell);
+            }
+        }
+        function showStrokeOverlay(phraseIdx) {
+            strokeOverlayPhraseIdx = Math.max(0, Math.min(9, phraseIdx));
+            renderStrokeOverlay();
+            document.getElementById('strokeOverlay').classList.remove('hidden');
+        }
+        (function initStrokeSwipe() {
+            const overlay = document.getElementById('strokeOverlay');
+            const SWIPE_THRESHOLD = 50;
+            let startX = 0;
+            let justSwiped = false;
+            function handleSwipe(dx) {
+                if (Math.abs(dx) < SWIPE_THRESHOLD) return false;
+                justSwiped = true;
+                if (dx > 0) {
+                    strokeOverlayPhraseIdx = (strokeOverlayPhraseIdx + 9) % 10;
+                } else {
+                    strokeOverlayPhraseIdx = (strokeOverlayPhraseIdx + 1) % 10;
+                }
+                renderStrokeOverlay();
+                setTimeout(() => { justSwiped = false; }, 100);
+                return true;
+            }
+            overlay.addEventListener('touchstart', e => {
+                startX = e.touches[0].clientX;
+            }, { passive: true });
+            overlay.addEventListener('touchend', e => {
+                const dx = e.changedTouches[0].clientX - startX;
+                if (handleSwipe(dx)) e.preventDefault();
+            }, { passive: false });
+            overlay.addEventListener('mousedown', e => {
+                startX = e.clientX;
+            });
+            overlay.addEventListener('mouseup', e => {
+                handleSwipe(e.clientX - startX);
+            });
+            overlay.addEventListener('click', e => {
+                if (justSwiped) return;
+                overlay.classList.add('hidden');
+            });
+        })();
+
+        function updatePhraseHighlight(n) {
+            let highlighted = null;
+            document.querySelectorAll('.phrase-block').forEach(el => {
+                const on = n != null && el.dataset.phrase === String(n);
+                el.classList.toggle('highlight', on);
+                if (on) highlighted = el;
+            });
+            if (highlighted) {
+                highlighted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function applyCSV(text) {
+            const msg = document.getElementById('message');
+            const sel = document.getElementById('setSelect');
+            const rows = parseCSV(text);
+            allSets = extractSets(rows);
+            if (!allSets.length) throw new Error('試算表格式不符或無資料');
+            sel.innerHTML = allSets.map((s, i) =>
+                `<option value="${i}">${s.label}</option>`
+            ).join('');
+            sel.value = '0';
+            lastSetSelectIdx = 0;
+            renderGrid(allSets[0].chars, allSets[0].raws);
+            loadDraftToGrid(0);
+            msg.textContent = '載入完成，共 ' + allSets.length + ' 組';
+            msg.className = 'message';
+        }
+
+        async function loadSheet() {
+            const msg = document.getElementById('message');
+            const sel = document.getElementById('setSelect');
+            const loadBtn = document.getElementById('loadCsvBtn');
+            msg.textContent = '載入中…';
+            msg.className = 'message';
+            loadBtn.style.display = 'none';
+            draftSourceId = null;
+            try {
+                let text = '';
+                let fromEmbeddedExamCsv = false;
+                try {
+                    const resp = await fetch(CSV_URL);
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    text = await resp.text();
+                } catch (corsErr) {
+                    for (const proxy of CORS_PROXIES) {
+                        try {
+                            const resp = await fetch(proxy(CSV_URL));
+                            if (resp.ok) { text = await resp.text(); break; }
+                        } catch (_) {}
+                    }
+                    if (!text) {
+                        const local = await fetch('exam_data.csv').then(r => r.ok ? r.text() : '').catch(() => '');
+                        if (local) {
+                            text = local;
+                            fromEmbeddedExamCsv = true;
+                        } else throw corsErr;
+                    }
+                }
+                if (fromEmbeddedExamCsv) {
+                    draftSourceId = 's_' + SHEET_ID + '_g_' + sheetGid + '_embedded_exam_data';
+                }
+                applyCSV(text);
+            } catch (e) {
+                msg.innerHTML = '載入失敗（使用 file:// 開啟會被擋）。<br>請 (1) 將試算表匯出為 CSV 放在同目錄並命名 <code>exam_data.csv</code> 後重整，或 (2) 點擊下方按鈕選擇 CSV 檔案，或 (3) 用 HTTP 開啟：<code>python3 -m http.server 8000</code> 再開 <code>http://localhost:8000/</code> 或 <code>http://localhost:8000/index.html</code>';
+                msg.className = 'message error';
+                sel.innerHTML = '<option value="">載入失敗</option>';
+                loadBtn.style.display = 'inline-block';
+            }
+        }
+
+        document.getElementById('loadCsvBtn').addEventListener('click', () => document.getElementById('csvFile').click());
+        document.getElementById('csvFile').addEventListener('change', (e) => {
+            const f = e.target.files && e.target.files[0];
+            if (!f) return;
+            const safeName = (f.name || 'file.csv').replace(/[^\w.\u4e00-\u9fff-]/g, '_').slice(0, 96);
+            draftSourceId = 'local_' + safeName + '_' + f.size + '_' + f.lastModified;
+            const r = new FileReader();
+            r.onload = () => {
+                try {
+                    applyCSV(r.result);
+                    document.getElementById('message').textContent = '已從本機載入，共 ' + allSets.length + ' 組';
+                } catch (err) {
+                    document.getElementById('message').textContent = '解析失敗：' + (err.message || err);
+                    document.getElementById('message').className = 'message error';
+                }
+            };
+            r.readAsText(f, 'UTF-8');
+            e.target.value = '';
+        });
+
+        (function initDonationFloatingBanner() {
+            var LS_KEY = 'dictation_donation_banner_dismissed_v1';
+            var overlay = document.getElementById('donationBannerOverlay');
+            var chip = document.getElementById('donationChip');
+            var link = document.getElementById('donationBannerLink');
+            if (!overlay || !chip) return;
+            function dismissBanner(save) {
+                overlay.classList.add('hidden');
+                overlay.setAttribute('aria-hidden', 'true');
+                chip.classList.remove('hidden');
+                if (save) {
+                    try { localStorage.setItem(LS_KEY, '1'); } catch (e) {}
+                }
+            }
+            function syncBanner() {
+                var dismissed = false;
+                try { dismissed = localStorage.getItem(LS_KEY) === '1'; } catch (e) {}
+                if (dismissed || document.body.classList.contains('exam-mode')) {
+                    dismissBanner(false);
+                    return;
+                }
+                overlay.classList.remove('hidden');
+                overlay.setAttribute('aria-hidden', 'false');
+                chip.classList.add('hidden');
+            }
+            overlay.addEventListener('click', function () {
+                dismissBanner(true);
+            });
+            if (link) {
+                link.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    dismissBanner(true);
+                });
+            }
+            syncBanner();
+            try {
+                var mo = new MutationObserver(function () {
+                    if (overlay.classList.contains('hidden')) return;
+                    if (document.body.classList.contains('exam-mode') ||
+                        document.body.classList.contains('fullscreen-fallback')) {
+                        dismissBanner(true);
+                    }
+                });
+                mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+            } catch (e) {}
+        })();
+
+        function getBopomofoModeBtnText() {
+            return document.body.classList.contains('pinyin-mode') ? '📝 全拼音' : '📝 全注音';
+        }
+        document.getElementById('modeToggleBtn').addEventListener('click', () => {
+            if (document.body.classList.contains('timer-running')) return;
+            const body = document.body;
+            const btn = document.getElementById('modeToggleBtn');
+            closePreview();
+            body.classList.remove('exam-mode', 'mode-bopomofo', 'mode-answer');
+            if (btn.textContent === '✏️ 編輯前次設定') {
+                btn.textContent = '📝 考試中';
+                btn.style.background = 'linear-gradient(135deg,#ef5350,#e53935)';
+                body.classList.add('exam-mode');
+            } else if (btn.textContent === '📝 考試中') {
+                btn.textContent = '📝 對答案';
+                btn.style.background = 'linear-gradient(135deg,#66bb6a,#43a047)';
+                body.classList.add('mode-answer');
+            } else if (btn.textContent === '📝 對答案') {
+                btn.textContent = getBopomofoModeBtnText();
+                btn.style.background = 'linear-gradient(135deg,#42a5f5,#1e88e5)';
+                body.classList.add('mode-bopomofo');
+            } else {
+                btn.textContent = '✏️ 編輯前次設定';
+                btn.style.background = 'linear-gradient(135deg,#9e9e9e,#757575)';
+            }
+        });
+
+        function syncPinyinToggleBtn() {
+            const btn = document.getElementById('pinyinToggleBtn');
+            const on = document.body.classList.contains('pinyin-mode');
+            btn.textContent = on ? '切換注音' : '切換拼音';
+            btn.style.background = on
+                ? 'linear-gradient(135deg,#8e24aa,#6a1b9a)'
+                : 'linear-gradient(135deg,#26a69a,#00897b)';
+            const modeBtn = document.getElementById('modeToggleBtn');
+            if (modeBtn && modeBtn.textContent.indexOf('全') >= 0) {
+                modeBtn.textContent = getBopomofoModeBtnText();
+            }
+        }
+        document.getElementById('pinyinToggleBtn').addEventListener('click', () => {
+            document.body.classList.toggle('pinyin-mode');
+            syncPinyinToggleBtn();
+        });
+        syncPinyinToggleBtn();
+
+        document.getElementById('fullscreenBtn').addEventListener('click', () => {
+            const doc = document.documentElement;
+            const fs = document.fullscreenElement || document.webkitFullscreenElement;
+            const fallback = document.body.classList.contains('fullscreen-fallback');
+            if (fs || fallback) {
+                const exit = document.exitFullscreen || document.webkitExitFullscreen;
+                if (exit && fs) exit.call(document);
+                document.body.classList.remove('fullscreen-fallback');
+            } else {
+                const req = doc.requestFullscreen || doc.webkitRequestFullscreen;
+                if (req) req.call(doc).catch(() => { document.body.classList.add('fullscreen-fallback'); });
+                else document.body.classList.add('fullscreen-fallback');
+            }
+        });
+        document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) document.body.classList.remove('fullscreen-fallback'); });
+        document.addEventListener('webkitfullscreenchange', () => { if (!document.webkitFullscreenElement) document.body.classList.remove('fullscreen-fallback'); });
+        (function initMobileFit() {
+            const meta = document.querySelector('meta[name="viewport"]');
+            const designWPortrait = 920;
+            function fit() {
+                const physW = screen.width || window.outerWidth;
+                const isNarrow = physW <= 768;
+                const isLandscape = window.outerWidth > window.outerHeight;
+                document.body.classList.toggle('narrow-screen', isNarrow);
+                document.body.classList.toggle('narrow-landscape', isNarrow && isLandscape);
+                const w = window.outerWidth || window.innerWidth;
+                if (w > 768) {
+                    meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+                    return;
+                }
+                var designW = designWPortrait;
+                if (isNarrow && isLandscape) {
+                    designW = w;
+                }
+                const s = Math.max(0.3, Math.min(1, (w / designW))).toFixed(2);
+                meta.setAttribute('content', 'width=' + designW + ', initial-scale=' + s + ', maximum-scale=' + s + ', user-scalable=no');
+            }
+            fit();
+            window.addEventListener('resize', fit);
+            window.addEventListener('orientationchange', function() { setTimeout(fit, 150); });
+            document.addEventListener('DOMContentLoaded', fit);
+        })();
+        let currentDraft = null;
+        const DRAFT_KEY = 'dictation_exam_drafts';
+
+        function getDraftSourcePrefix() {
+            if (draftSourceId != null) return draftSourceId;
+            return 's_' + SHEET_ID + '_g_' + sheetGid;
+        }
+
+        function getDraftKey(setIdx) {
+            if (!allSets[setIdx]) return null;
+            const label = String(allSets[setIdx].label || '').replace(/\r|\n/g, ' ').trim() || ('set' + setIdx);
+            return DRAFT_KEY + '_' + getDraftSourcePrefix() + '_' + label;
+        }
+
+        function getVisibilityFromGrid() {
+            const charVis = new Array(40).fill(true);
+            const bopomofoVis = new Array(40).fill(true);
+            const isPinyinMode = document.body.classList.contains('pinyin-mode');
+            document.querySelectorAll('.cell-pair').forEach(pair => {
+                const cell = pair.querySelector('.cell');
+                const bop = pair.querySelector('.cell-bopomofo');
+                const pin = pair.querySelector('.cell-pinyin');
+                const idx = parseInt(cell && cell.dataset.idx, 10);
+                if (idx >= 0 && idx < 40) {
+                    charVis[idx] = !cell || !cell.classList.contains('tianzige');
+                    if (isPinyinMode) {
+                        bopomofoVis[idx] = !pin || !pin.classList.contains('tianzige');
+                    } else {
+                        bopomofoVis[idx] = !bop || !bop.classList.contains('tianzige');
+                    }
+                }
+            });
+            return { charVisible: charVis, bopomofoVisible: bopomofoVis };
+        }
+
+        function applyDraftToGrid(draft) {
+            if (!draft) return;
+            const isPinyinMode = document.body.classList.contains('pinyin-mode');
+            document.querySelectorAll('.cell-pair').forEach(pair => {
+                const cell = pair.querySelector('.cell');
+                const bop = pair.querySelector('.cell-bopomofo');
+                const pin = pair.querySelector('.cell-pinyin');
+                const idx = parseInt(cell && cell.dataset.idx, 10);
+                if (idx >= 0 && idx < 40) {
+                    if (cell) cell.classList.toggle('tianzige', !draft.charVisible[idx]);
+                    if (isPinyinMode) {
+                        if (pin) pin.classList.toggle('tianzige', !draft.bopomofoVisible[idx]);
+                    } else {
+                        if (bop) bop.classList.toggle('tianzige', !draft.bopomofoVisible[idx]);
+                    }
+                }
+            });
+        }
+
+        function loadDraftToGrid(setIdx) {
+            const key = getDraftKey(setIdx);
+            if (!key) return;
+            try {
+                const stored = localStorage.getItem(key);
+                if (stored) {
+                    const draft = JSON.parse(stored);
+                    applyDraftToGrid(draft);
+                }
+            } catch (_) {}
+        }
+
+        function saveDraft(setIdx) {
+            const key = getDraftKey(setIdx);
+            if (!key) return;
+            const draft = getVisibilityFromGrid();
+            currentDraft = draft;
+            try {
+                localStorage.setItem(key, JSON.stringify(draft));
+            } catch (_) {}
+        }
+
+        /** 將目前畫面上的顯示／隱藏寫入該週 localStorage（不必按「定稿」） */
+        function persistCurrentSetDraft() {
+            const idx = parseInt(document.getElementById('setSelect').value, 10);
+            if (!isNaN(idx) && allSets[idx]) saveDraft(idx);
+        }
+
+        document.getElementById('setSelect').addEventListener('change', () => {
+            const sel = document.getElementById('setSelect');
+            const prev = lastSetSelectIdx;
+            const idx = parseInt(sel.value, 10);
+            if (!isNaN(prev) && allSets[prev]) {
+                saveDraft(prev);
+            }
+            if (isNaN(idx) || !allSets[idx]) return;
+            renderGrid(allSets[idx].chars, allSets[idx].raws);
+            loadDraftToGrid(idx);
+            lastSetSelectIdx = idx;
+        });
+
+        function getPreviewMode() {
+            if (document.body.classList.contains('pinyin-mode')) return 'pinyin';
+            if (document.body.classList.contains('mode-answer')) return 'answer';
+            if (document.body.classList.contains('mode-bopomofo')) return 'bopomofo';
+            return 'edit';
+        }
+
+        function getEffectiveDraftForPreview(idx) {
+            const body = document.body;
+            if (body.classList.contains('mode-answer')) {
+                return { charVisible: new Array(40).fill(true), bopomofoVisible: new Array(40).fill(true) };
+            }
+            if (body.classList.contains('mode-bopomofo')) {
+                return { charVisible: new Array(40).fill(false), bopomofoVisible: new Array(40).fill(true) };
+            }
+            return getVisibilityFromGrid();
+        }
+
+        function renderOneColumn(draft, chars, raws, mode) {
+            const cv = draft.charVisible || [];
+            const bv = draft.bopomofoVisible || [];
+            const isBopomofoOnly = (mode === 'bopomofo');
+            let html = '';
+            for (let p = 0; p < 10; p++) {
+                const start = p * 4;
+                const phraseChars = chars.slice(start, start + 4);
+                const phraseRaw = (raws || chars).slice(start, start + 4);
+                html += '<div class="exam-item' + (p === 5 ? ' exam-item-lower' : '') + '">';
+                html += '<span class="item-num">' + (p + 1) + '</span>';
+                html += '<div class="item-units">';
+                for (let c = 0; c < 4; c++) {
+                    const idx = start + c;
+                    const ch = phraseChars[c] || '';
+                    const raw = phraseRaw[c] || '';
+                    const showCh = cv[idx] !== false;
+                    const showBop = bv[idx] !== false;
+                    const charCls = showCh ? ' show-only' : ' tianzige';
+                    const charContent = showCh ? escapeHtml(ch) : '';
+                    const hideEmptyChar = isBopomofoOnly && !ch;
+                    html += '<div class="exam-char-cell' + charCls + (hideEmptyChar ? ' char-cell-hidden' : '') + '">' + charContent + '</div>';
+                    const bopCls = showBop ? ' show-only' : ' hidden';
+                    const bopContent = showBop ? escapeHtml(raw) : '';
+                    html += '<div class="exam-bopomofo-cell' + bopCls + '">' + bopContent + '</div>';
+                }
+                html += '</div></div>';
+            }
+            return html;
+        }
+
+        function renderPinyinBand(draft, chars, raws) {
+            const cv = draft.charVisible || [];
+            const bv = draft.bopomofoVisible || [];
+            let html = '<div class="print-band-items"><div class="print-band-group">';
+            for (let p = 0; p < 10; p++) {
+                if (p === 5) html += '</div><div class="print-band-group">';
+                const start = p * 4;
+                const phraseChars = chars.slice(start, start + 4);
+                const phraseRaw = (raws || chars).slice(start, start + 4);
+                html += '<div class="exam-item-pinyin">';
+                html += '<span class="item-num-pinyin">' + (p + 1) + '</span>';
+                html += '<div class="item-units-pinyin">';
+                for (let c = 0; c < 4; c++) {
+                    const idx = start + c;
+                    const ch = phraseChars[c] || '';
+                    const raw = phraseRaw[c] || '';
+                    const showCh = cv[idx] !== false;
+                    const showBop = bv[idx] !== false;
+                    if (!ch && !raw) {
+                        continue;
+                    }
+                    const charCls = showCh ? ' show-only' : ' tianzige';
+                    const charContent = showCh ? escapeHtml(ch) : '';
+                    const bopCls = showBop ? ' show-only' : ' hidden';
+                    const bopContent = showBop ? escapeHtml(raw) : '';
+                    html += '<div class="exam-unit-pinyin">';
+                    html += '<div class="exam-pinyin-cell' + bopCls + '"><span class="exam-pinyin-text">' + bopContent + '</span></div>';
+                    html += '<div class="exam-char-cell' + charCls + '">' + charContent + '</div>';
+                    html += '</div>';
+                }
+                html += '</div></div>';
+            }
+            html += '</div></div>';
+            return html;
+        }
+
+        function renderPrintSheet(draft, chars, raws, mode, label) {
+            if (!draft || !chars) return '';
+            const wm = label ? '<div class="column-watermark">' + escapeHtml(label) + '</div>' : '';
+            if (mode === 'pinyin') {
+                const band = renderPinyinBand(draft, chars, raws);
+                return '<div class="print-page print-page-pinyin"><div class="print-band print-band-top">' + wm + band +
+                    '</div><div class="print-band print-band-bottom">' + wm + band + '</div></div>';
+            }
+            const col = renderOneColumn(draft, chars, raws, mode);
+            return '<div class="print-page"><div class="print-column print-column-left">' + wm + col +
+                '</div><div class="print-column print-column-right">' + wm + col + '</div></div>';
+        }
+
+        function showPreview() {
+            if (document.body.classList.contains('exam-mode')) return;
+            const idx = parseInt(document.getElementById('setSelect').value, 10);
+            if (isNaN(idx) || !allSets[idx]) return;
+            const set = allSets[idx];
+            const draft = getEffectiveDraftForPreview(idx);
+            const mode = getPreviewMode();
+            const label = set.label || '';
+            const html = renderPrintSheet(draft, set.chars, set.raws, mode, label);
+            const previewPaper = document.getElementById('previewPaper');
+            previewPaper.classList.toggle('pinyin-preview', mode === 'pinyin');
+            previewPaper.innerHTML = html;
+            document.getElementById('printZone').innerHTML = html;
+            document.getElementById('previewOverlay').classList.remove('hidden');
+        }
+
+        function closePreview() {
+            document.getElementById('previewOverlay').classList.add('hidden');
+        }
+
+        document.getElementById('draftBtn').addEventListener('click', () => {
+            if (document.body.classList.contains('exam-mode')) return;
+            const idx = parseInt(document.getElementById('setSelect').value, 10);
+            if (isNaN(idx) || !allSets[idx]) return;
+            saveDraft(idx);
+            document.getElementById('message').textContent = '已定稿並儲存：' + allSets[idx].label;
+            if (!document.getElementById('previewOverlay').classList.contains('hidden')) {
+                const draft = getEffectiveDraftForPreview(idx);
+                const mode = getPreviewMode();
+                const label = allSets[idx].label || '';
+                const html = renderPrintSheet(draft, allSets[idx].chars, allSets[idx].raws, mode, label);
+                document.getElementById('previewPaper').innerHTML = html;
+                document.getElementById('printZone').innerHTML = html;
+            }
+        });
+
+        document.getElementById('previewBtn').addEventListener('click', () => showPreview());
+
+        function getPdfFilename(idx) {
+            const label = allSets[idx]?.label || '考試單';
+            const mode = getPreviewMode();
+            if (mode === 'answer') return label + '答案';
+            if (mode === 'bopomofo') return label + '考中文';
+            if (mode === 'pinyin') return label + '考中文拼音';
+            return label + '考中文注音';
+        }
+
+        async function downloadPdf() {
+            const idx = parseInt(document.getElementById('setSelect').value, 10);
+            if (isNaN(idx) || !allSets[idx]) return;
+            const el = document.getElementById('previewPaper');
+            if (!el || !el.innerHTML.trim()) {
+                showPreview();
+            }
+            const target = document.getElementById('previewPaper');
+            if (!target || !target.innerHTML.trim()) return;
+            try {
+                const canvas = await html2canvas(target, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                const { jsPDF } = window.jspdf;
+                const mode = getPreviewMode();
+                const isPinyin = mode === 'pinyin';
+                const pdf = new jsPDF({ orientation: isPinyin ? 'p' : 'l', unit: 'mm', format: 'letter' });
+                const imgW = isPinyin ? 215.9 : 279.4;
+                const maxH = isPinyin ? 279.4 : 215.9;
+                const imgH = (canvas.height * imgW) / canvas.width;
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgW, Math.min(imgH, maxH));
+                pdf.save(getPdfFilename(idx) + '.pdf');
+                document.getElementById('message').textContent = '已下載 PDF';
+            } catch (e) {
+                document.getElementById('message').textContent = '下載失敗：' + (e.message || '');
+            }
+        }
+
+        document.getElementById('downloadPdfBtn').addEventListener('click', () => {
+            if (document.body.classList.contains('exam-mode')) return;
+            const idx = parseInt(document.getElementById('setSelect').value, 10);
+            if (isNaN(idx) || !allSets[idx]) return;
+            showPreview();
+            setTimeout(downloadPdf, 400);
+        });
+
+        document.getElementById('previewCloseBtn').addEventListener('click', closePreview);
+        document.getElementById('previewPrintBtn').addEventListener('click', () => downloadPdf());
+        document.getElementById('previewOverlay').addEventListener('click', e => {
+            if (e.target.id === 'previewOverlay') closePreview();
+        });
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => pickVoice();
+        }
+
+        (function initTimer() {
+            const wrap = document.getElementById('timerWrap');
+            const fill = document.getElementById('timerFill');
+            const labelEl = document.getElementById('timerLabel');
+            const timeEl = document.getElementById('timerTime');
+            const secInput = document.getElementById('timerSecInput');
+            let timerId = null;
+            let remaining = 120;
+            function getTotalSec() {
+                const n = parseInt(secInput.value, 10);
+                return (isNaN(n) || n < 5 || n > 120) ? 120 : n;
+            }
+            let phraseIdx = 0;
+            function format(sec) {
+                const m = Math.floor(sec / 60);
+                const s = sec % 60;
+                return m + ':' + (s < 10 ? '0' : '') + s;
+            }
+            function update() {
+                const total = getTotalSec();
+                timeEl.textContent = format(remaining);
+                const deg = total > 0 ? (remaining / total) * 360 : 0;
+                fill.style.background = 'conic-gradient(from -90deg, #42a5f5 0deg, #42a5f5 ' + deg + 'deg, #e0e0e0 ' + deg + 'deg)';
+            }
+            function tick() {
+                remaining--;
+                update();
+                if (remaining > 0 && remaining % 30 === 0) {
+                    const selIdx = parseInt(document.getElementById('setSelect').value, 10);
+                    if (!isNaN(selIdx) && allSets[selIdx]) {
+                        speakPhraseWithIntro(phraseIdx, allSets[selIdx].chars);
+                    }
+                }
+                if (remaining <= 0) {
+                    clearInterval(timerId);
+                    timerId = null;
+                    phraseIdx++;
+                    if (phraseIdx <= 9) {
+                        const selIdx = parseInt(document.getElementById('setSelect').value, 10);
+                        if (!isNaN(selIdx) && allSets[selIdx]) {
+                            speakPhraseWithIntro(phraseIdx, allSets[selIdx].chars);
+                        }
+                        labelEl.textContent = '第' + (phraseIdx + 1) + '題';
+                        updatePhraseHighlight(phraseIdx + 1);
+                        remaining = getTotalSec();
+                        update();
+                        timerId = setInterval(tick, 1000);
+                    } else {
+                        wrap.classList.remove('running');
+                        document.body.classList.remove('timer-running');
+                        labelEl.textContent = '點擊開始';
+                        updatePhraseHighlight(null);
+                        playCheerSound();
+                    }
+                }
+            }
+            wrap.addEventListener('click', () => {
+                if (timerId) return;
+                const selIdx = parseInt(document.getElementById('setSelect').value, 10);
+                if (isNaN(selIdx) || !allSets[selIdx]) return;
+                wrap.classList.add('running');
+                document.body.classList.add('timer-running');
+                phraseIdx = 0;
+                speakPhraseWithIntro(0, allSets[selIdx].chars);
+                labelEl.textContent = '第1題';
+                updatePhraseHighlight(1);
+                remaining = getTotalSec();
+                update();
+                timerId = setInterval(tick, 1000);
+            });
+            labelEl.textContent = '點擊開始';
+            update();
+            secInput.addEventListener('mousedown', e => e.stopPropagation());
+            secInput.addEventListener('click', e => e.stopPropagation());
+        })();
+
+        function extractGidFromUrl(url) {
+            if (!url || typeof url !== 'string') return '';
+            const m = url.match(/[?&#]gid=(\d+)/i);
+            return m ? m[1] : '';
+        }
+        function extractSheetIdFromPaste(text) {
+            const t = (text || '').trim();
+            const m = t.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/i);
+            return m ? m[1] : '';
+        }
+        function buildCustomDictationUrl(sheetIdVal, gidVal) {
+            const q = new URLSearchParams();
+            q.set('sheet_id', sheetIdVal);
+            q.set('gid', gidVal || '0');
+            const u = new URL(window.location.href);
+            u.search = '';
+            u.hash = '';
+            if (u.pathname.endsWith('/')) u.pathname += 'index.html';
+            u.search = q.toString();
+            return u.toString();
+        }
+        function initCustomDictationDialog() {
+            const dialog = document.getElementById('customDictationDialog');
+            const openBtn = document.getElementById('btnOpenCustomDictationDialog');
+            const closeBtn = document.getElementById('customDictationDialogClose');
+            const backdrop = document.getElementById('customDictationDialogBackdrop');
+            const pasteEl = document.getElementById('customDictationPasteUrl');
+            const genBtn = document.getElementById('customDictationGenBtn');
+            const errEl = document.getElementById('customDictationGenErr');
+            const resultBox = document.getElementById('customDictationResultBox');
+            const resultUrlEl = document.getElementById('customDictationResultUrl');
+            const copyBtn = document.getElementById('customDictationCopyBtn');
+            const openExamBtn = document.getElementById('customDictationOpenBtn');
+            if (!dialog || !openBtn) return;
+
+            function showDialog(show) {
+                if (show) {
+                    dialog.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                    if (pasteEl) pasteEl.focus();
+                } else {
+                    dialog.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            }
+            function hideErr() {
+                if (errEl) {
+                    errEl.style.display = 'none';
+                    errEl.textContent = '';
+                }
+            }
+            function showErr(msg) {
+                if (errEl) {
+                    errEl.style.display = 'block';
+                    errEl.textContent = msg;
+                }
+                if (resultBox) resultBox.classList.remove('show');
+            }
+
+            openBtn.addEventListener('click', function () {
+                hideErr();
+                if (resultBox) resultBox.classList.remove('show');
+                showDialog(true);
+            });
+            closeBtn && closeBtn.addEventListener('click', function () { showDialog(false); });
+            backdrop && backdrop.addEventListener('click', function () { showDialog(false); });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && dialog && !dialog.classList.contains('hidden')) {
+                    showDialog(false);
+                }
+            });
+
+            genBtn && genBtn.addEventListener('click', function () {
+                hideErr();
+                const raw = (pasteEl && pasteEl.value ? pasteEl.value : '').trim();
+                if (!raw) {
+                    showErr('請貼上試算表網址。');
+                    return;
+                }
+                const sid = extractSheetIdFromPaste(raw);
+                if (!sid) {
+                    showErr('無法辨識試算表。請貼上 Google 試算表連結（網址中需有 /spreadsheets/d/…）。');
+                    return;
+                }
+                const gidParsed = extractGidFromUrl(raw) || '0';
+                const url = buildCustomDictationUrl(sid, gidParsed);
+                if (resultUrlEl) resultUrlEl.value = url;
+                if (resultBox) resultBox.classList.add('show');
+            });
+
+            function copyText(text, onDone) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(onDone).catch(function () {
+                        execCopyFallback(text, onDone);
+                    });
+                } else {
+                    execCopyFallback(text, onDone);
+                }
+            }
+            function execCopyFallback(text, onDone) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.setAttribute('readonly', '');
+                ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                } catch (e) {}
+                document.body.removeChild(ta);
+                if (onDone) onDone();
+            }
+
+            copyBtn && copyBtn.addEventListener('click', function () {
+                const t = (resultUrlEl && resultUrlEl.value ? resultUrlEl.value : '').trim();
+                if (!t) return;
+                const label = copyBtn.textContent;
+                copyText(t, function () {
+                    copyBtn.textContent = '已複製';
+                    setTimeout(function () { copyBtn.textContent = label; }, 1500);
+                });
+            });
+
+            openExamBtn && openExamBtn.addEventListener('click', function () {
+                const t = (resultUrlEl && resultUrlEl.value ? resultUrlEl.value : '').trim();
+                if (!t) return;
+                window.location.href = t;
+            });
+        }
+
+        initCustomDictationDialog();
+        loadSheet();
+    </script>
+</body>
+</html>
